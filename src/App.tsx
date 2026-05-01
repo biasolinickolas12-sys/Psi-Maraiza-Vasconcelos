@@ -1171,7 +1171,7 @@ export default function App() {
               >
                 <div className="text-center px-2">
                   <TypingText text="Toque sua essência, descubra sua " />
-                  <span className="relative italic font-black bg-gradient-to-r from-[#FF4500] via-[#FFD700] to-[#FF4500] bg-[length:200%_auto] bg-clip-text text-transparent animate-[shimmer-text_3s_linear_infinite] drop-shadow-[0_0_15px_rgba(255,69,0,0.5)] brightness-125 transition-all duration-500 hover:scale-110" style={{ WebkitTextStroke: '1px black' }}>
+                  <span className="relative italic font-black bg-gradient-to-r from-[#FF4500] via-[#FF8C00] to-[#FF4500] bg-[length:200%_auto] bg-clip-text text-transparent animate-[shimmer-text_3s_linear_infinite] drop-shadow-[0_0_15px_rgba(255,69,0,0.4)] brightness-125 transition-all duration-500 hover:scale-110">
                     <TypingText text="potência" />
                   </span>
                   <TypingText text=" e transforme a sua " />
