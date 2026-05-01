@@ -1171,7 +1171,7 @@ export default function App() {
               >
                 <div className="text-center px-2">
                   <TypingText text="Toque sua essência, descubra sua " />
-                  <span className="italic font-normal text-brand-orange drop-shadow-none">
+                  <span className="italic font-black text-brand-orange drop-shadow-[0_0_15px_rgba(249,115,22,0.4)]">
                     <TypingText text="potência" />
                   </span>
                   <TypingText text=" e transforme a sua " />
