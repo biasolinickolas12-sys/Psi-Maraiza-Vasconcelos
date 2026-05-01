@@ -1171,8 +1171,11 @@ export default function App() {
               >
                 <div className="text-center px-2">
                   <TypingText text="Toque sua essência, descubra sua " />
-                  <span className="italic font-black bg-gradient-to-r from-[#FF9E3D] via-[#FF3D00] to-[#FF9E3D] bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(255,61,0,0.8)] brightness-125">
-                    <TypingText text="potência" />
+                  <span className="relative inline-block px-2">
+                    <span className="absolute inset-0 bg-slate-950/20 blur-xl rounded-full -z-10" />
+                    <span className="italic font-black bg-gradient-to-r from-[#FF9E3D] via-[#FF3D00] to-[#FF9E3D] bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(255,61,0,0.8)] brightness-125">
+                      <TypingText text="potência" />
+                    </span>
                   </span>
                   <TypingText text=" e transforme a sua " />
                   <span className="relative inline-block">
