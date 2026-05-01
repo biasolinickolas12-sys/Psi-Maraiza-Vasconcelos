@@ -1171,12 +1171,12 @@ export default function App() {
               >
                 <div className="text-center px-2">
                   <TypingText text="Toque sua essência, descubra sua " />
-                  <span className="relative inline-block px-4 py-1 mx-1">
-                    {/* Fundo escuro para contraste absoluto */}
-                    <span className="absolute inset-0 bg-slate-950/40 blur-md rounded-xl -z-10" />
-                    <span className="italic font-black text-white drop-shadow-[0_0_8px_#FF3D00] drop-shadow-[0_0_15px_#FF3D00] drop-shadow-[0_0_25px_#FF3D00] animate-pulse">
+                  <span className="relative inline-block mx-2 px-6 py-1.5 md:px-8 md:py-2 bg-brand-orange rounded-full shadow-[0_10px_30px_rgba(249,115,22,0.4)] transform -rotate-2 group-hover:rotate-0 transition-all duration-500 scale-105">
+                    <span className="relative z-10 text-white font-black italic">
                       <TypingText text="potência" />
                     </span>
+                    {/* Efeito de brilho interno */}
+                    <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent rounded-full" />
                   </span>
                   <TypingText text=" e transforme a sua " />
                   <span className="relative inline-block">
