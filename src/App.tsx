@@ -1065,7 +1065,7 @@ export default function App() {
                   initial={{ opacity: 0, x: 30, scale: 1.05, y: -5 }}
                   animate={{ opacity: 1, x: 0, scale: 1.05, y: -5 }}
                   transition={{ duration: 1, delay: 1.3 }}
-                  className="absolute top-[82%] -right-12 md:-right-52 -translate-y-1/2 z-20"
+                  className="absolute top-[82%] md:top-[65%] -right-12 md:-right-52 -translate-y-1/2 z-20"
                 >
                   <div className="bg-white/80 backdrop-blur-2xl px-2 py-1 md:px-6 md:py-4 rounded-[1rem] md:rounded-[2.5rem] shadow-[0_0_20px_rgba(255,107,53,0.4),0_20px_50px_rgba(255,107,53,0.15)] border border-white/60 flex items-center gap-1.5 md:gap-4 group cursor-default relative overflow-hidden ring-1 md:ring-2 ring-brand-orange">
                     <div className="absolute inset-0 bg-gradient-to-tr from-brand-yellow/10 to-transparent opacity-100 transition-opacity" />
@@ -1104,15 +1104,15 @@ export default function App() {
                   <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250%] md:[300%] h-[250%] md:[300%] opacity-[0.25]"
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250%] md:[300%] h-[250%] md:[300%] opacity-[0.45]"
                   >
                     <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
                       <defs>
                         <radialGradient id="rayGradient" cx="50%" cy="50%" r="50%">
                           <stop offset="0%" stopColor="#FFF5E1" stopOpacity="1" />
-                          <stop offset="20%" stopColor="#FFD700" stopOpacity="0.8" />
-                          <stop offset="50%" stopColor="#FF9E3D" stopOpacity="0.6" />
-                          <stop offset="80%" stopColor="#FF6B35" stopOpacity="0.3" />
+                          <stop offset="20%" stopColor="#FFD700" stopOpacity="0.9" />
+                          <stop offset="50%" stopColor="#FF9E3D" stopOpacity="0.75" />
+                          <stop offset="80%" stopColor="#FF6B35" stopOpacity="0.5" />
                           <stop offset="100%" stopColor="#FF6B35" stopOpacity="0" />
                         </radialGradient>
                       </defs>
