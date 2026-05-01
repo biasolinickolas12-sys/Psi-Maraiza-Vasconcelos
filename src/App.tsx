@@ -623,6 +623,16 @@ export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isStoryOpen, setIsStoryOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const [showExitPopup, setShowExitPopup] = useState(false);
   const [hasShownExitPopup, setHasShownExitPopup] = useState(false);
@@ -1002,10 +1012,10 @@ export default function App() {
           {/* Layered Orange Waves with soft movement */}
           <div className="absolute bottom-0 left-0 w-full h-full overflow-hidden opacity-30">
             <motion.svg 
-              animate={{ 
+              animate={!isMobile ? { 
                 x: [0, -100, 0],
                 y: [0, 20, 0]
-              }}
+              } : {}}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
               className="absolute bottom-[-10%] left-0 w-[200%] h-[70%]" 
               viewBox="0 0 1440 320" 
@@ -1014,10 +1024,10 @@ export default function App() {
               <path fill="#FF9E3D" fillOpacity="0.6" d="M0,192L60,170.7C120,149,240,107,360,117.3C480,128,600,192,720,213.3C840,235,960,213,1080,202.7C1200,192,1320,192,1380,192L1440,192L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z"></path>
             </motion.svg>
             <motion.svg 
-              animate={{ 
+              animate={!isMobile ? { 
                 x: [-100, 0, -100],
                 y: [20, 0, 20]
-              }}
+              } : {}}
               transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
               className="absolute bottom-[-20%] left-0 w-[200%] h-[80%]" 
               viewBox="0 0 1440 320" 
@@ -1102,9 +1112,9 @@ export default function App() {
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full -z-10">
                   {/* Rotating Rays */}
                   <motion.div
-                    animate={{ rotate: 360 }}
+                    animate={!isMobile ? { rotate: 360 } : {}}
                     transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250%] md:[300%] h-[250%] md:[300%] opacity-[0.45]"
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250%] md:[300%] h-[250%] md:[300%] opacity-[0.45] md:opacity-[0.45]"
                   >
                     <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
                       <defs>
@@ -1116,10 +1126,10 @@ export default function App() {
                           <stop offset="100%" stopColor="#FF6B35" stopOpacity="0" />
                         </radialGradient>
                       </defs>
-                      {[...Array(24)].map((_, i) => (
+                      {[...Array(isMobile ? 12 : 24)].map((_, i) => (
                         <motion.path
                           key={i}
-                          d={`M 50 50 L ${50 + 150 * Math.cos((i * 15 * Math.PI) / 180)} ${50 + 150 * Math.sin((i * 15 * Math.PI) / 180)} L ${50 + 150 * Math.cos(((i * 15 + 6) * Math.PI) / 180)} ${50 + 150 * Math.sin(((i * 15 + 6) * Math.PI) / 180)} Z`}
+                          d={`M 50 50 L ${50 + 150 * Math.cos((i * (isMobile ? 30 : 15) * Math.PI) / 180)} ${50 + 150 * Math.sin((i * (isMobile ? 30 : 15) * Math.PI) / 180)} L ${50 + 150 * Math.cos(((i * (isMobile ? 30 : 15) + 6) * Math.PI) / 180)} ${50 + 150 * Math.sin(((i * (isMobile ? 30 : 15) + 6) * Math.PI) / 180)} Z`}
                           fill="url(#rayGradient)"
                         />
                       ))}
