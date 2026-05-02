@@ -6,12 +6,13 @@ import { supabase } from "./supabase";
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 
 export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('isLoggedIn') === 'true');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [notasImportantes, setNotasImportantes] = useState("");
+  const [metaConsultas, setMetaConsultas] = useState(20);
 
   const [activeTab, setActiveTab] = useState<'agenda' | 'financeiro'>('agenda');
 
@@ -64,13 +65,21 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
   };
 
   const loadNotas = async () => {
-    const { data } = await supabase.from('configuracoes').select('valor').eq('chave', 'notas_importantes').maybeSingle();
-    if (data) setNotasImportantes(data.valor || "");
+    const { data: nData } = await supabase.from('configuracoes').select('valor').eq('chave', 'notas_importantes').maybeSingle();
+    if (nData) setNotasImportantes(nData.valor || "");
+    
+    const { data: mData } = await supabase.from('configuracoes').select('valor').eq('chave', 'meta_consultas').maybeSingle();
+    if (mData) setMetaConsultas(Number(mData.valor) || 20);
   };
 
   const saveNotas = async (val: string) => {
     setNotasImportantes(val);
     await supabase.from('configuracoes').upsert({ chave: 'notas_importantes', valor: val });
+  };
+
+  const saveMeta = async (val: number) => {
+    setMetaConsultas(val);
+    await supabase.from('configuracoes').upsert({ chave: 'meta_consultas', valor: val.toString() });
   };
 
   const loadTodasSessoes = async () => {
@@ -81,7 +90,9 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
   };
 
   useEffect(() => {
+    localStorage.setItem('isLoggedIn', isLoggedIn.toString());
     if (isLoggedIn) {
+      loadPacientes();
       if (activeTab === 'financeiro') {
         loadTodasSessoes();
         loadNotas();
@@ -141,6 +152,15 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
       }
     }
     setLoading(false);
+  };
+
+  const handleDeletePaciente = async (id: string) => {
+    if (confirm("Tem certeza que deseja excluir este paciente e todo seu histórico?")) {
+      setLoading(true);
+      await supabase.from('pacientes').delete().eq('id', id);
+      loadPacientes();
+      setLoading(false);
+    }
   };
 
   const openFinanceiro = async (p: any) => {
@@ -217,7 +237,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
     const daysInMonth = new Date(faturamentoAno, faturamentoMes, 0).getDate();
     const data = [];
     
-    // Create a map for O(1) lookup
+    // Create a map for O(1) lookup of real sessions
     const sessionCounts = new Map<string, number>();
     sessoesMesSelecionado.forEach(s => {
       if (s.data_sessao) {
@@ -225,16 +245,27 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
       }
     });
 
+    const weekdaysMap: Record<number, string> = {
+      1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo"
+    };
+
     for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(faturamentoAno, faturamentoMes - 1, day);
+      const dayOfWeek = weekdaysMap[date.getDay()];
       const dateStr = `${faturamentoAno}-${String(faturamentoMes).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      
+      // Count fixed patients for this specific day of the week
+      const fixedCount = pacientesFixos.filter(p => p.dia_fixo === dayOfWeek).length;
+      const realCount = sessionCounts.get(dateStr) || 0;
+      
       data.push({ 
         date: dateStr, 
-        consultas: sessionCounts.get(dateStr) || 0 
+        consultas: Math.max(realCount, fixedCount) // Use whichever is higher to avoid double counting expected vs actual
       });
     }
     
     return data;
-  }, [sessoesMesSelecionado, faturamentoMes, faturamentoAno]);
+  }, [sessoesMesSelecionado, faturamentoMes, faturamentoAno, pacientesFixos]);
 
   const pacientesDoDia = useMemo(() => {
     if (!selectedChartDay) return [];
@@ -305,6 +336,40 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
           <span className="font-medium text-slate-700">{p.dia_fixo || '-'}</span>
         </div>
       </div>
+
+      <div className="flex gap-2">
+        <button 
+          onClick={() => handleEditClick(p)}
+          className="flex-1 bg-slate-100 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center gap-2"
+        >
+          <Edit2 size={16} /> Editar
+        </button>
+        <button 
+          onClick={() => openFinanceiro(p)}
+          className="flex-1 bg-brand-orange/10 text-brand-orange font-bold py-3 rounded-xl hover:bg-brand-orange hover:text-white transition-all flex items-center justify-center gap-2"
+        >
+          <DollarSign size={16} /> Financeiro
+        </button>
+      </div>
+
+      <div className="flex gap-2">
+        <a 
+          href={`https://wa.me/55${p.telefone?.replace(/\D/g, '')}`} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex-1 bg-emerald-500 text-white font-bold py-3 rounded-xl hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
+        >
+          <MessageCircle size={16} /> WhatsApp
+        </a>
+        <button 
+          onClick={() => handleDeletePaciente(p.id)}
+          className="px-4 bg-red-50 text-red-500 font-bold py-3 rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
+          title="Excluir Paciente"
+        >
+          <X size={18} />
+        </button>
+      </div>
+
       <div className="text-sm border-t border-slate-100 pt-3">
         <span className="text-slate-400 block text-xs font-bold uppercase mb-1">Pauta da Próxima Semana</span>
         <p className="text-slate-700 line-clamp-2">{p.pauta_proxima_semana || '-'}</p>
@@ -409,6 +474,19 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                   )}
                 </div>
               </section>
+
+              {/* Anotações Importantes na Agenda */}
+              <section className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                <span className="text-slate-500 font-bold uppercase text-xs mb-3 block flex items-center gap-2">
+                  <Edit2 size={14} /> Anotações Importantes
+                </span>
+                <textarea 
+                  value={notasImportantes}
+                  onChange={(e) => saveNotas(e.target.value)}
+                  placeholder="Digite aqui anotações, lembretes ou tarefas..."
+                  className="w-full bg-slate-50 rounded-2xl p-4 outline-none focus:bg-white border-2 border-transparent focus:border-brand-orange/20 transition-all text-slate-700 text-sm min-h-[120px] resize-none"
+                />
+              </section>
             </div>
           )}
 
@@ -425,6 +503,39 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                   <span className="text-slate-400 text-sm mt-2">Apenas sessões marcadas como "Pagas"</span>
                 </div>
                 
+                {/* Meta de Consultas */}
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col">
+                  <div className="flex justify-between items-start mb-4">
+                    <span className="text-slate-500 font-bold uppercase text-xs block">Meta de Consultas Pagas</span>
+                    <input 
+                      type="number" 
+                      value={metaConsultas} 
+                      onChange={e => saveMeta(Number(e.target.value))}
+                      className="w-16 bg-slate-50 border-none rounded-lg p-1 text-center font-bold text-slate-700 focus:ring-2 focus:ring-brand-orange outline-none"
+                    />
+                  </div>
+                  
+                  {(() => {
+                    const pagasCount = sessoesMesSelecionado.filter(s => s.pago).length;
+                    const percent = Math.min(Math.round((pagasCount / (metaConsultas || 1)) * 100), 100);
+                    return (
+                      <>
+                        <div className="flex items-end gap-2 mb-2">
+                          <span className="text-3xl font-black text-slate-800">{pagasCount}</span>
+                          <span className="text-slate-400 font-bold mb-1">/ {metaConsultas}</span>
+                          <span className="ml-auto text-brand-orange font-black">{percent}%</span>
+                        </div>
+                        <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-brand-orange transition-all duration-1000" 
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+
                 {/* Filters Section */}
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
                   <span className="text-slate-500 font-bold uppercase text-xs mb-4 block flex items-center gap-2">
@@ -448,19 +559,6 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                       </select>
                     </div>
                   </div>
-                </div>
-
-                {/* Important Notes Section */}
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col">
-                  <span className="text-slate-500 font-bold uppercase text-xs mb-3 block flex items-center gap-2">
-                    <Edit2 size={14} /> Anotações Importantes
-                  </span>
-                  <textarea 
-                    value={notasImportantes}
-                    onChange={(e) => saveNotas(e.target.value)}
-                    placeholder="Digite aqui anotações, lembretes ou metas para o mês..."
-                    className="w-full flex-1 bg-slate-50 rounded-2xl p-4 outline-none focus:bg-white border-2 border-transparent focus:border-brand-orange/20 transition-all text-slate-700 text-sm resize-none min-h-[100px]"
-                  />
                 </div>
               </div>
 

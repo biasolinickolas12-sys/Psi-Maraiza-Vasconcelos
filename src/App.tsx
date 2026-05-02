@@ -628,7 +628,11 @@ const FAQSection = ({ isMobile }: { isMobile: boolean }) => {
 
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isAdminPortalOpen, setIsAdminPortalOpen] = useState(false);
+  const [isAdminPortalOpen, setIsAdminPortalOpen] = useState(() => localStorage.getItem('isAdminPortalOpen') === 'true');
+
+  useEffect(() => {
+    localStorage.setItem('isAdminPortalOpen', isAdminPortalOpen.toString());
+  }, [isAdminPortalOpen]);
   const [isStoryOpen, setIsStoryOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
