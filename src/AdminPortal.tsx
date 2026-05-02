@@ -217,6 +217,27 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
       if (activeTab === 'financeiro') loadTodasSessoes();
     }
   };
+
+  const handleDeleteDayData = async () => {
+    if (!selectedChartDay) return;
+    const dateFormatted = new Date(selectedChartDay + 'T12:00:00').toLocaleDateString('pt-BR');
+    if (!window.confirm(`ATENÇÃO: Deseja apagar TODOS os registros de sessões e pagamentos do dia ${dateFormatted}?\n\nEsta ação não pode ser desfeita.`)) return;
+    
+    setLoading(true);
+    const { error } = await supabase
+      .from('pagamentos')
+      .delete()
+      .eq('data_sessao', selectedChartDay);
+
+    if (!error) {
+      loadTodasSessoes();
+      alert("Dados do dia removidos com sucesso.");
+    } else {
+      alert("Erro ao remover dados.");
+    }
+    setLoading(false);
+  };
+
   const handleDeleteMonthData = async () => {
     const mesNome = new Date(faturamentoAno, faturamentoMes - 1).toLocaleString('pt-BR', { month: 'long' });
     if (!window.confirm(`ATENÇÃO: Você está prestes a apagar TODOS os registros de sessões e pagamentos de ${mesNome} de ${faturamentoAno}.\n\nEsta ação é irreversível. Deseja continuar?`)) return;
@@ -774,7 +795,15 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                     <span className="text-slate-800 font-bold text-lg">
                       Sessões do dia {new Date(selectedChartDay + 'T12:00:00').toLocaleDateString('pt-BR')}
                     </span>
-                    <button onClick={() => setSelectedChartDay(null)} className="text-sm text-slate-500 hover:text-slate-800 font-medium">Limpar filtro</button>
+                    <div className="flex items-center gap-4">
+                      <button 
+                        onClick={handleDeleteDayData}
+                        className="text-[10px] font-black text-red-400 hover:text-red-600 uppercase tracking-widest transition-colors"
+                      >
+                        Apagar dados deste dia
+                      </button>
+                      <button onClick={() => setSelectedChartDay(null)} className="text-sm text-slate-500 hover:text-slate-800 font-medium">Limpar filtro</button>
+                    </div>
                   </div>
                   <div className="space-y-3">
                     {pacientesDoDia.map(s => (
