@@ -243,9 +243,6 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
     setLoading(false);
   };
 
-    setLoading(false);
-  };
-
   const handleClearAgendaMonth = async () => {
     const mesNome = new Date(faturamentoAno, faturamentoMes - 1).toLocaleString('pt-BR', { month: 'long' });
     if (!window.confirm(`ATENÇÃO: Você deseja apagar TODOS os dados de agenda de ${mesNome} de ${faturamentoAno}?\n\n- Datas de consultas dos pacientes esporádicos deste mês serão removidas.\n- Todos os registros financeiros (pagamentos) deste mês serão deletados.\n\nEsta ação é irreversível!`)) return;
