@@ -790,9 +790,9 @@ export default function App() {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         onClick={() => setIsMenuOpen(true)}
-        className="fixed top-6 left-6 z-50 w-14 h-14 bg-white/80 backdrop-blur-xl rounded-full flex items-center justify-center shadow-[0_0_20px_#ff6600,inset_0_0_10px_#ff6600] border-[3px] border-[#ff6600] group hover:bg-[#ff6600] hover:shadow-[0_0_30px_#ff6600,inset_0_0_15px_#ff6600] transition-all duration-300"
+        className="fixed top-2 left-2 md:top-6 md:left-6 z-50 w-12 h-12 md:w-14 md:h-14 bg-white/80 backdrop-blur-xl rounded-full flex items-center justify-center shadow-[0_0_20px_#ff6600,inset_0_0_10px_#ff6600] border-[3px] border-[#ff6600] group hover:bg-[#ff6600] hover:shadow-[0_0_30px_#ff6600,inset_0_0_15px_#ff6600] transition-all duration-300"
       >
-        <Menu size={24} className="text-[#ff6600] group-hover:text-white transition-colors" />
+        <Menu className="w-5 h-5 md:w-6 md:h-6 text-[#ff6600] group-hover:text-white transition-colors" />
       </motion.button>
 
       {/* Slide-in Navigation Overlay */}
