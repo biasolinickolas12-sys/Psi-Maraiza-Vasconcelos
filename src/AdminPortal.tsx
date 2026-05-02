@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { 
-  X, Plus, Flower2, Edit2, DollarSign, CalendarDays, LineChart as LineChartIcon, Filter, MessageCircle, Trash2
+  X, Plus, Flower2, Edit2, DollarSign, CalendarDays, LineChart as LineChartIcon, Filter, MessageCircle, Trash2, Search
 } from "lucide-react";
 import { supabase } from "./supabase";
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
