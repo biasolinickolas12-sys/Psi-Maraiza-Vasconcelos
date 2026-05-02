@@ -202,7 +202,7 @@ const TriageSection = () => {
         
         {/* Animated Abstract Elements - More Vibrant */}
         <motion.div
-          animate={{
+          animate={isMobile ? {} : {
             scale: [1, 1.3, 1],
             rotate: [0, 90, 0],
             x: [0, 50, 0],
@@ -212,7 +212,7 @@ const TriageSection = () => {
           className="absolute top-20 right-[10%] w-[500px] h-[500px] bg-brand-orange/20 blur-[120px] rounded-full mix-blend-multiply"
         />
         <motion.div
-          animate={{
+          animate={isMobile ? {} : {
             scale: [1, 1.4, 1],
             rotate: [0, -60, 0],
             x: [0, -60, 0],
@@ -727,6 +727,7 @@ export default function App() {
   };
 
   const TypingText = ({ text, className }: { text: string; className?: string }) => {
+    if (isMobile) return <span className={className}>{text}</span>;
     return (
       <>
         {text.split("").map((char, index) => (
@@ -742,11 +743,11 @@ export default function App() {
     <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-brand-yellow/30 overflow-x-hidden">
       {/* Background Graphic Elements - Artistic Flair */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Vibrant Blobs */}
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-brand-orange rounded-full blur-[120px] opacity-20"></div>
-        <div className="absolute top-1/2 -right-48 w-[600px] h-[600px] bg-brand-yellow rounded-full blur-[150px] opacity-20"></div>
-        <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-brand-blue/30 rounded-full blur-[100px] opacity-15"></div>
-        <div className="absolute top-1/4 left-1/3 w-64 h-64 bg-pink-500/20 rounded-full blur-[100px] opacity-15"></div>
+        {/* Vibrant Blobs - Hidden on Mobile for Performance */}
+        <div className="hidden md:block absolute -top-24 -left-24 w-96 h-96 bg-brand-orange rounded-full blur-[120px] opacity-20"></div>
+        <div className="hidden md:block absolute top-1/2 -right-48 w-[600px] h-[600px] bg-brand-yellow rounded-full blur-[150px] opacity-20"></div>
+        <div className="hidden md:block absolute bottom-0 left-1/4 w-80 h-80 bg-brand-blue/30 rounded-full blur-[100px] opacity-15"></div>
+        <div className="hidden md:block absolute top-1/4 left-1/3 w-64 h-64 bg-pink-500/20 rounded-full blur-[100px] opacity-15"></div>
         
         {/* Geographic/Geometric Decorative Elements */}
         <motion.div 
@@ -898,7 +899,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsStoryOpen(false)}
-              className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-[100]"
+              className={`fixed inset-0 bg-slate-950/80 ${isMobile ? 'backdrop-blur-sm' : 'backdrop-blur-xl'} z-[100]`}
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, y: 30 }}
@@ -906,8 +907,8 @@ export default function App() {
               exit={{ opacity: 0, scale: 0.9, y: 30 }}
               className="fixed inset-4 md:inset-10 lg:inset-20 bg-white z-[110] rounded-[2rem] md:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row"
             >
-              {/* Image Side - Carousel */}
-              <div className="w-full md:w-2/5 h-64 md:h-full relative overflow-hidden bg-slate-100 group/carousel">
+              {/* Image Side - Carousel - Hidden on Mobile for Performance */}
+              <div className="hidden md:block w-full md:w-2/5 h-64 md:h-full relative overflow-hidden bg-slate-100 group/carousel">
                 <AnimatePresence mode="wait">
                   <motion.img 
                     key={currentImageIndex}
@@ -951,7 +952,7 @@ export default function App() {
 
                 <button 
                   onClick={() => setIsStoryOpen(false)}
-                  className="absolute top-6 left-6 w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-brand-orange transition-all duration-300 z-30"
+                  className="absolute top-6 left-6 md:top-6 md:left-6 w-12 h-12 bg-slate-900/40 md:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-brand-orange transition-all duration-300 z-30"
                 >
                   <X size={24} />
                 </button>
@@ -963,7 +964,7 @@ export default function App() {
               </div>
 
               {/* Text Side */}
-              <div className="w-full md:w-3/5 h-full overflow-y-auto p-6 md:p-16 bg-[#FEFAF6]">
+              <div className="w-full md:w-3/5 h-full overflow-y-auto p-8 md:p-16 bg-[#FEFAF6]">
                 <div className="max-w-xl mx-auto space-y-8 md:space-y-12">
                   <section>
                     <div className="flex items-center gap-3 mb-3 md:mb-4">
@@ -1566,13 +1567,13 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="grid lg:grid-cols-2 gap-20 items-center">
             
-            {/* Left Column: Portrait with Design Flourishes */}
+            {/* Left Column: Portrait with Design Flourishes - Hidden on Mobile for Performance */}
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="relative order-2 lg:order-1"
+              className="relative order-2 lg:order-1 hidden md:block"
             >
               {/* Back Geometry */}
               <div className="absolute -top-10 -left-10 w-full h-full bg-brand-orange/10 rounded-[4rem] -z-10 rotate-3" />
