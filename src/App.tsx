@@ -1573,7 +1573,7 @@ export default function App() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="relative order-2 lg:order-1 hidden md:block"
+              className="relative order-2 lg:order-1"
             >
               {/* Back Geometry */}
               <div className="absolute -top-10 -left-10 w-full h-full bg-brand-orange/10 rounded-[4rem] -z-10 rotate-3" />
