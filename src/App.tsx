@@ -194,8 +194,8 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
 
   return (
     <section id="triagem" className="py-16 md:py-24 relative overflow-hidden">
-      {/* Background Decor matching Home style */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
+      {/* Background Decor matching Home style - Desktop */}
+      <div className="hidden md:block absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
         <div className="absolute top-0 left-0 w-full h-full bg-slate-50/50 -z-20" />
         <div className="absolute top-1/4 -left-20 w-[600px] h-[600px] bg-brand-orange/10 blur-[120px] rounded-full" />
         <div className="absolute bottom-1/4 -right-20 w-[600px] h-[600px] bg-brand-yellow/10 blur-[120px] rounded-full" />
@@ -271,6 +271,15 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
         {/* Background blobs maintained for blush effect */}
       </div>
 
+      {/* Static Mobile Fallback - Zero Animations, Zero Lag */}
+      <div className="md:hidden absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-0 left-0 w-full h-full bg-slate-50/50 -z-20" />
+        <div className="absolute -top-10 -right-10 w-48 h-48 bg-brand-orange/5 rounded-full" />
+        <div className="absolute bottom-0 -left-10 w-56 h-56 bg-brand-yellow/5 rounded-full" />
+        <div className="absolute top-[20%] right-[10%] w-24 h-24 opacity-10 pointer-events-none" 
+             style={{ backgroundImage: 'radial-gradient(circle, #f97316 2px, transparent 0)', backgroundSize: '16px 16px' }} />
+      </div>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center mb-10 md:mb-16">
           <motion.div 
@@ -312,7 +321,7 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
 
             <motion.div 
               layout={!isMobile}
-              className={`bg-white/95 ${isMobile ? 'backdrop-blur-sm' : 'backdrop-blur-2xl'} rounded-[2.5rem] md:rounded-[4rem] p-6 mb-8 md:p-20 border-[6px] relative overflow-hidden group transition-all duration-700 neon-card-glow`}
+              className={`bg-white/95 ${isMobile ? 'backdrop-blur-sm' : 'backdrop-blur-2xl'} rounded-[2.5rem] md:rounded-[4rem] p-6 mb-8 md:p-20 border-[6px] relative overflow-hidden group transition-all duration-700 ${!isMobile ? 'neon-card-glow' : 'border-brand-orange/20 shadow-xl'}`}
               style={{
                 backgroundImage: "linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(254,250,246,1) 100%)",
               }}
