@@ -45,7 +45,7 @@ import { supabase } from "./supabase";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 
 // Triage Section Component
-const TriageSection = () => {
+const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
@@ -2005,7 +2005,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <TriageSection />
+      <TriageSection isMobile={isMobile} />
 
       {/* Ethics Note Section */}
       <section className="py-20 bg-slate-50 relative overflow-hidden border-t border-slate-200">
