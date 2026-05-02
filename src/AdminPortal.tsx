@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { 
-  X, Plus, Flower2, Edit2, DollarSign, CalendarDays, LineChart as LineChartIcon, Filter, MessageCircle
+  X, Plus, Flower2, Edit2, DollarSign, CalendarDays, LineChart as LineChartIcon, Filter, MessageCircle, Trash2
 } from "lucide-react";
 import { supabase } from "./supabase";
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
@@ -204,6 +204,16 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
     const { error } = await supabase.from('pagamentos').update({ pago: !pag.pago }).eq('id', pag.id);
     if (!error) {
       loadPagamentos(pag.paciente_id);
+      if (activeTab === 'financeiro') loadTodasSessoes();
+    }
+  };
+
+  const handleDeletePagamento = async (id: string, pacienteId: string) => {
+    if (!window.confirm("Deseja realmente excluir este registro de pagamento?")) return;
+    
+    const { error } = await supabase.from('pagamentos').delete().eq('id', id);
+    if (!error) {
+      loadPagamentos(pacienteId);
       if (activeTab === 'financeiro') loadTodasSessoes();
     }
   };
@@ -905,16 +915,25 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                       <div className="font-bold text-slate-800">{new Date(pag.data_sessao + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
                       <div className="text-sm text-slate-500">R$ {pag.valor}</div>
                     </div>
-                    <button 
-                      onClick={() => togglePago(pag)}
-                      className={`px-4 py-1.5 rounded-full text-xs font-bold border-2 transition-colors ${
-                        pag.pago 
-                        ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100' 
-                        : 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
-                      }`}
-                    >
-                      {pag.pago ? 'PAGO' : 'PENDENTE'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => togglePago(pag)}
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold border-2 transition-colors ${
+                          pag.pago 
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100' 
+                          : 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
+                        }`}
+                      >
+                        {pag.pago ? 'PAGO' : 'PENDENTE'}
+                      </button>
+                      <button 
+                        onClick={() => handleDeletePagamento(pag.id, pag.paciente_id)}
+                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Excluir Pagamento"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 ))}
                 {pagamentos.length === 0 && (
