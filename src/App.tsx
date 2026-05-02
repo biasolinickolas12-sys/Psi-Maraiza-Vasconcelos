@@ -1210,44 +1210,29 @@ export default function App() {
               className="relative z-20 flex flex-col items-center mt-2 md:-mt-8"
             >
               <motion.h1 
-                variants={typingContainer}
-                initial="hidden"
-                animate="visible"
                 className="font-serif text-[24px] md:text-[40px] lg:text-[50px] font-bold tracking-tighter leading-tight text-slate-950 mb-6 w-full drop-shadow-[0_2px_10px_rgba(255,255,255,0.4)] flex flex-col items-center overflow-visible"
               >
                 <div className="text-center px-2">
-                  <TypingText text="Toque sua essência, descubra sua " />
-                  <motion.span 
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.6, delay: 1.9 }}
-                    className="relative inline-block mx-2 px-5 py-1 md:py-2 transition-all duration-500 hover:scale-105 align-middle -translate-y-1"
-                  >
-                    {/* Exact Card Background as Quote */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-brand-orange via-brand-yellow to-brand-orange-light rounded-[1rem] md:rounded-[1.5rem] shadow-[0_15px_30px_rgba(255,107,53,0.25)] border-[3px] md:border-[5px] border-white overflow-hidden -z-10">
-                        <div className="absolute inset-0 bg-white/10 backdrop-blur-[2px]"></div>
-                    </div>
-                    <span className="relative z-10 italic font-black text-slate-950 drop-shadow-sm">
-                      <TypingText text="potência" />
-                    </span>
-                  </motion.span>
-                  <TypingText text=" e transforme a sua " />
-                  <span className="relative inline-block">
-                    <span className="relative z-10">
-                      <TypingText text="história" />
-                    </span>
-                    <motion.svg 
-                      initial={{ pathLength: 0 }}
-                      animate={{ pathLength: 1 }}
-                      transition={{ duration: 1, delay: 2.2 }}
-                      className="absolute -bottom-1 left-0 w-full h-2 md:h-3 text-brand-yellow/80 -z-0" 
-                      viewBox="0 0 100 10" 
-                      preserveAspectRatio="none"
-                    >
-                      <path d="M0,5 Q50,10 100,5" stroke="currentColor" strokeWidth="8" fill="none" strokeLinecap="round" />
-                    </motion.svg>
+                  Toque sua essência, descubra sua 
+                  <span className="relative inline-block mx-2">
+                    <span className="relative z-10 italic font-black text-brand-orange">potência</span>
+                    <motion.span 
+                      initial={{ width: 0 }}
+                      animate={{ width: '100%' }}
+                      transition={{ delay: 0.8, duration: 1, ease: "circOut" }}
+                      className="absolute bottom-0 md:bottom-1 left-0 h-3 md:h-4 bg-brand-yellow/50 -rotate-1 z-0"
+                    />
                   </span>
-                  <TypingText text="." />
+                  e transforme a sua 
+                  <span className="relative inline-block mx-2">
+                    <span className="relative z-10 font-black">história</span>
+                    <motion.span 
+                      initial={{ width: 0 }}
+                      animate={{ width: '100%' }}
+                      transition={{ delay: 1, duration: 1, ease: "circOut" }}
+                      className="absolute bottom-0 md:bottom-1 left-0 h-3 md:h-4 bg-brand-yellow/50 -rotate-1 z-0"
+                    />
+                  </span>.
                 </div>
               </motion.h1>
               
