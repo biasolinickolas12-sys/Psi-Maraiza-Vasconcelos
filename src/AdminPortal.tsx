@@ -164,11 +164,15 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
     }
   };
 
-  const openFinanceiro = async (p: any) => {
+  const openFinanceiro = (p: any, initialDate?: string) => {
     setSelectedPacienteForPayment(p);
-    setPagamentoData({ data_sessao: "", valor: p.valor_sessao || "", pago: false });
-    setIsPaymentModalOpen(true);
+    setPagamentoData({ 
+      data_sessao: initialDate || p.data_consulta || new Date().toISOString().split('T')[0], 
+      valor: p.valor_sessao || "", 
+      pago: true 
+    });
     loadPagamentos(p.id);
+    setIsPaymentModalOpen(true);
   };
 
   const loadPagamentos = async (pacienteId: string) => {
@@ -836,7 +840,14 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                           <div>
                             {s.pago 
                               ? <span className="bg-emerald-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black shadow-sm">PAGO</span>
-                              : <span className="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-[10px] font-black border border-amber-200">PENDENTE</span>
+                              : (
+                                <button 
+                                  onClick={() => openFinanceiro(s, selectedChartDay)}
+                                  className="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-[10px] font-black border border-amber-200 hover:bg-amber-200 transition-colors"
+                                >
+                                  REGISTRAR PAGAMENTO
+                                </button>
+                              )
                             }
                           </div>
                         </div>
