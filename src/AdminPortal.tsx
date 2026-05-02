@@ -407,7 +407,8 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
         id: s.paciente_id,
         nome_completo: s.pacientes?.nome_completo || "Paciente",
         tipo: 'esporadico',
-        horario: s.pacientes?.horario_consulta
+        horario: s.pacientes?.horario_consulta,
+        telefone: s.pacientes?.telefone
       }));
 
     // Fixed patients for today's weekday
@@ -417,7 +418,8 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
         id: p.id,
         nome_completo: p.nome_completo,
         tipo: 'fixo',
-        horario: p.horario_consulta
+        horario: p.horario_consulta,
+        telefone: p.telefone
       }));
 
     // Scheduled sporadic patients for today
@@ -427,7 +429,8 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
         id: p.id,
         nome_completo: p.nome_completo,
         tipo: 'esporadico',
-        horario: p.horario_consulta
+        horario: p.horario_consulta,
+        telefone: p.telefone
       }));
 
     const combined = [...realSessions];
@@ -632,9 +635,19 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                                   <span className="font-black text-sm block leading-none mb-1">{p.nome_completo}</span>
                                   <span className={`text-[9px] uppercase font-bold tracking-widest ${p.tipo === 'fixo' ? 'text-slate-400' : 'text-brand-orange'}`}>{p.horario} • {p.tipo}</span>
                                 </div>
-                                <button onClick={() => openFinanceiro(p)} className={`p-2 rounded-xl transition-colors ${p.tipo === 'fixo' ? 'bg-white/10 hover:bg-white/20' : 'bg-brand-orange/10 hover:bg-brand-orange/20'}`}>
-                                  <DollarSign size={14} />
-                                </button>
+                                <div className="flex gap-2">
+                                  <a 
+                                    href={`https://wa.me/55${p.telefone?.replace(/\D/g, '')}`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className={`p-2 rounded-xl transition-colors ${p.tipo === 'fixo' ? 'bg-white/10 hover:bg-emerald-500' : 'bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white'}`}
+                                  >
+                                    <MessageCircle size={14} />
+                                  </a>
+                                  <button onClick={() => openFinanceiro(p)} className={`p-2 rounded-xl transition-colors ${p.tipo === 'fixo' ? 'bg-white/10 hover:bg-white/20' : 'bg-brand-orange/10 hover:bg-brand-orange/20'}`}>
+                                    <DollarSign size={14} />
+                                  </button>
+                                </div>
                               </div>
                             ))}
                           </div>
