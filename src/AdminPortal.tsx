@@ -84,7 +84,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
 
   const loadTodasSessoes = async () => {
     const { data } = await supabase.from('pagamentos').select(`
-      id, data_sessao, valor, pago, paciente_id, pacientes(nome_completo)
+      id, data_sessao, valor, pago, paciente_id, pacientes(nome_completo, horario_consulta)
     `);
     if (data) setTodasSessoes(data);
   };
@@ -269,8 +269,73 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
 
   const pacientesDoDia = useMemo(() => {
     if (!selectedChartDay) return [];
-    return sessoesMesSelecionado.filter(s => s.data_sessao === selectedChartDay);
-  }, [sessoesMesSelecionado, selectedChartDay]);
+    
+    // Sporadic patients
+    const sporadic = sessoesMesSelecionado
+      .filter(s => s.data_sessao === selectedChartDay)
+      .map(s => ({
+        id: s.paciente_id,
+        nome_completo: s.pacientes?.nome_completo || "Paciente",
+        tipo: 'esporadico',
+        valor: s.valor,
+        pago: s.pago,
+        horario: s.pacientes?.horario_consulta
+      }));
+
+    // Fixed patients
+    const date = new Date(selectedChartDay + 'T12:00:00');
+    const dayOfWeek = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][date.getDay()];
+    const fixed = pacientesFixos
+      .filter(p => p.dia_fixo === dayOfWeek)
+      .map(p => ({
+        id: p.id,
+        nome_completo: p.nome_completo,
+        tipo: 'fixo',
+        horario: p.horario_consulta,
+        valor: p.valor_sessao
+      }));
+
+    const combined = [...sporadic];
+    fixed.forEach(f => {
+      if (!combined.some(c => c.id === f.id)) {
+        combined.push(f);
+      }
+    });
+
+    return combined.sort((a, b) => (a.horario || "").localeCompare(b.horario || ""));
+  }, [sessoesMesSelecionado, selectedChartDay, pacientesFixos]);
+
+  const scheduleForToday = useMemo(() => {
+    const todayStr = new Date().toLocaleDateString('en-CA');
+    const dayOfWeek = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][new Date().getDay()];
+    
+    const sporadic = sessoesMesSelecionado
+      .filter(s => s.data_sessao === todayStr)
+      .map(s => ({
+        id: s.paciente_id,
+        nome_completo: s.pacientes?.nome_completo || "Paciente",
+        tipo: 'esporadico',
+        horario: s.pacientes?.horario_consulta
+      }));
+
+    const fixed = pacientesFixos
+      .filter(p => p.dia_fixo === dayOfWeek)
+      .map(p => ({
+        id: p.id,
+        nome_completo: p.nome_completo,
+        tipo: 'fixo',
+        horario: p.horario_consulta
+      }));
+
+    const combined = [...sporadic];
+    fixed.forEach(f => {
+      if (!combined.some(c => c.id === f.id)) {
+        combined.push(f);
+      }
+    });
+
+    return combined.sort((a, b) => (a.horario || "").localeCompare(b.horario || ""));
+  }, [sessoesMesSelecionado, pacientesFixos]);
 
   if (!isLoggedIn) {
     return (
@@ -310,73 +375,38 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
           <p className="text-slate-500 text-sm">{p.idade} {p.idade ? 'anos •' : ''} {p.telefone}</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => openFinanceiro(p)} className="p-2 bg-slate-50 hover:bg-emerald-50 text-slate-600 hover:text-emerald-600 rounded-full transition-colors" title="Financeiro">
-            <DollarSign size={18} />
-          </button>
-          <button onClick={() => handleEditClick(p)} className="p-2 bg-slate-50 hover:bg-brand-orange/10 text-slate-600 hover:text-brand-orange rounded-full transition-colors" title="Editar">
-            <Edit2 size={18} />
+          <button onClick={() => openFinanceiro(p)} className="p-3 bg-brand-orange/10 text-brand-orange hover:bg-brand-orange hover:text-white rounded-2xl transition-all shadow-sm" title="Financeiro">
+            <DollarSign size={20} />
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        <div className="bg-slate-50 p-2 rounded-xl">
-          <span className="text-slate-400 block text-xs font-bold uppercase">Data</span>
-          <span className="font-medium text-slate-700">{p.data_consulta ? new Date(p.data_consulta + 'T12:00:00').toLocaleDateString('pt-BR') : '-'}</span>
-        </div>
-        <div className="bg-slate-50 p-2 rounded-xl">
-          <span className="text-slate-400 block text-xs font-bold uppercase">Horário</span>
-          <span className="font-medium text-slate-700">{p.horario_consulta || '-'}</span>
-        </div>
-        <div className="bg-slate-50 p-2 rounded-xl">
-          <span className="text-slate-400 block text-xs font-bold uppercase">Valor</span>
-          <span className="font-medium text-brand-orange">{p.valor_sessao || '-'}</span>
-        </div>
-        <div className="bg-slate-50 p-2 rounded-xl">
-          <span className="text-slate-400 block text-xs font-bold uppercase">Dia Fixo</span>
-          <span className="font-medium text-slate-700">{p.dia_fixo || '-'}</span>
-        </div>
-      </div>
-
-      <div className="flex gap-2">
-        <button 
-          onClick={() => handleEditClick(p)}
-          className="flex-1 bg-slate-100 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center gap-2"
-        >
-          <Edit2 size={16} /> Editar
-        </button>
-        <button 
-          onClick={() => openFinanceiro(p)}
-          className="flex-1 bg-brand-orange/10 text-brand-orange font-bold py-3 rounded-xl hover:bg-brand-orange hover:text-white transition-all flex items-center justify-center gap-2"
-        >
-          <DollarSign size={16} /> Financeiro
-        </button>
-      </div>
-
+      
       <div className="flex gap-2">
         <a 
           href={`https://wa.me/55${p.telefone?.replace(/\D/g, '')}`} 
           target="_blank" 
           rel="noopener noreferrer"
-          className="flex-1 bg-emerald-500 text-white font-bold py-3 rounded-xl hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
+          className="flex-1 bg-emerald-50 text-emerald-600 font-bold py-2 rounded-xl hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center gap-2 text-xs"
         >
-          <MessageCircle size={16} /> WhatsApp
+          <MessageCircle size={14} /> WhatsApp
         </a>
-        <button 
-          onClick={() => handleDeletePaciente(p.id)}
-          className="px-4 bg-red-50 text-red-500 font-bold py-3 rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
-          title="Excluir Paciente"
-        >
-          <X size={18} />
+        <button onClick={() => handleEditClick(p)} className="px-4 bg-slate-50 text-slate-500 font-bold py-2 rounded-xl hover:bg-slate-200 transition-all text-xs">
+          Editar
+        </button>
+        <button onClick={() => handleDeletePaciente(p.id)} className="px-4 bg-red-50 text-red-400 font-bold py-2 rounded-xl hover:bg-red-500 hover:text-white transition-all text-xs">
+          Excluir
         </button>
       </div>
 
-      <div className="text-sm border-t border-slate-100 pt-3">
-        <span className="text-slate-400 block text-xs font-bold uppercase mb-1">Pauta da Próxima Semana</span>
-        <p className="text-slate-700 line-clamp-2">{p.pauta_proxima_semana || '-'}</p>
-      </div>
-      <div className="text-sm border-t border-slate-100 pt-3">
-        <span className="text-slate-400 block text-xs font-bold uppercase mb-1">Relato Próx. Triagem</span>
-        <p className="text-slate-700 line-clamp-2">{p.relato_proxima_triagem || '-'}</p>
+      <div className="grid grid-cols-2 gap-2 text-[10px] uppercase font-bold tracking-wider">
+        <div className="bg-slate-50 p-2 rounded-xl">
+          <span className="text-slate-400 block mb-1">Horário</span>
+          <span className="text-slate-700">{p.horario_consulta || '-'}</span>
+        </div>
+        <div className="bg-slate-50 p-2 rounded-xl">
+          <span className="text-slate-400 block mb-1">Dia Fixo</span>
+          <span className="text-slate-700">{p.dia_fixo || '-'}</span>
+        </div>
       </div>
     </div>
   );
@@ -458,7 +488,54 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
         <div className="max-w-7xl mx-auto">
           
           {activeTab === 'agenda' && (
-            <div className="space-y-12">
+            <div className="space-y-10">
+              {/* Agenda de Hoje - Timeline */}
+              <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-brand-orange/5 rounded-bl-full -z-0" />
+                <div className="flex items-center gap-4 mb-8 relative z-10">
+                  <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                    <CalendarDays size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Agenda de Hoje</h2>
+                    <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-1 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar relative z-10">
+                  {Array.from({ length: 24 }).map((_, i) => {
+                    const hour = String(i).padStart(2, '0') + ":00";
+                    const patientsAtThisHour = scheduleForToday.filter(s => s.horario?.startsWith(String(i).padStart(2, '0')));
+                    
+                    return (
+                      <div key={hour} className="group flex gap-4 min-h-[50px]">
+                        <div className="w-12 pt-1 text-right">
+                          <span className="text-[10px] font-black text-slate-300 group-hover:text-brand-orange transition-colors">{hour}</span>
+                        </div>
+                        <div className="flex-1 relative pb-2">
+                          <div className="absolute left-0 top-3 bottom-0 w-px bg-slate-100 group-last:bg-transparent" />
+                          <div className="absolute left-[-4px] top-3 w-2 h-2 rounded-full border-2 border-slate-200 bg-white group-hover:border-brand-orange transition-colors" />
+                          
+                          <div className="ml-6 space-y-2">
+                            {patientsAtThisHour.map(p => (
+                              <div key={p.id} className={`p-3 rounded-2xl border flex items-center justify-between transition-all group/item hover:scale-[1.02] ${p.tipo === 'fixo' ? 'bg-slate-900 text-white border-slate-800' : 'bg-brand-orange/5 border-brand-orange/10 text-slate-900'}`}>
+                                <div>
+                                  <span className="font-black text-sm block leading-none mb-1">{p.nome_completo}</span>
+                                  <span className={`text-[9px] uppercase font-bold tracking-widest ${p.tipo === 'fixo' ? 'text-slate-400' : 'text-brand-orange'}`}>{p.horario} • {p.tipo}</span>
+                                </div>
+                                <button onClick={() => openFinanceiro(p)} className={`p-2 rounded-xl transition-colors ${p.tipo === 'fixo' ? 'bg-white/10 hover:bg-white/20' : 'bg-brand-orange/10 hover:bg-brand-orange/20'}`}>
+                                  <DollarSign size={14} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+
               <section>
                 <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
                   <span className="w-3 h-3 rounded-full bg-brand-orange block"></span>
@@ -624,20 +701,23 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                   </div>
                   <div className="space-y-3">
                     {pacientesDoDia.map(s => (
-                      <div key={s.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
+                      <div key={`${s.id}-${s.tipo}`} className="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
                         <div>
-                          <div className="font-bold text-slate-800">{s.pacientes?.nome_completo || 'Paciente Removido'}</div>
-                          <div className="text-xs text-slate-500">Valor: R$ {s.valor}</div>
+                          <div className="font-bold text-slate-800">{s.nome_completo}</div>
+                          <div className="text-[10px] uppercase font-bold tracking-widest text-slate-400">{s.horario} • {s.tipo}</div>
                         </div>
                         <div>
-                          {s.pago 
-                            ? <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold">Pago</span>
-                            : <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold">Pendente</span>
-                          }
+                          {s.tipo === 'esporadico' ? (
+                            s.pago 
+                              ? <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-bold">PAGO</span>
+                              : <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-bold">PENDENTE</span>
+                          ) : (
+                            <span className="bg-slate-200 text-slate-600 px-3 py-1 rounded-full text-[10px] font-bold">FIXO</span>
+                          )}
                         </div>
                       </div>
                     ))}
-                    {pacientesDoDia.length === 0 && <p className="text-sm text-slate-500">Nenhuma sessão encontrada para este dia.</p>}
+                    {pacientesDoDia.length === 0 && <p className="text-sm text-slate-500">Nenhuma consulta encontrada para este dia.</p>}
                   </div>
                 </div>
               )}
