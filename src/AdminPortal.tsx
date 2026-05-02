@@ -44,11 +44,6 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
   const [todasSessoes, setTodasSessoes] = useState<any[]>([]);
   const [selectedChartDay, setSelectedChartDay] = useState<string | null>(null);
 
-  const getTodayStr = () => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  };
-
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (email === "maraizapsic@gmail.com" && password === "iniciaratendimento135.") {
@@ -99,240 +94,20 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
     localStorage.setItem('isLoggedIn', isLoggedIn.toString());
     if (isLoggedIn) {
       loadPacientes();
-      loadTodasSessoes();
-      loadNotas();
-    }
-  }, [isLoggedIn]);
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      loadTodasSessoes();
-    }
-  }, [activeTab]);
-
-  const loadPagamentos = async (pacienteId: string) => {
-    const { data } = await supabase
-      .from('pagamentos')
-      .select('*')
-      .eq('paciente_id', pacienteId)
-      .order('data_sessao', { ascending: false });
-    if (data) setPagamentos(data);
-  };
-
-  const openFinanceiro = (p: any, prefillDate?: string | null) => {
-    setSelectedPacienteForPayment(p);
-    setPagamentoData({ 
-      data_sessao: prefillDate || getTodayStr(), 
-      valor: p.valor || p.valor_sessao || "", 
-      pago: true 
-    });
-    loadPagamentos(p.id);
-    setIsPaymentModalOpen(true);
-  };
-
-  const handleSavePagamento = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    const { error } = await supabase.from('pagamentos').insert([{
-      paciente_id: selectedPacienteForPayment.id,
-      ...pagamentoData
-    }]);
-
-    if (!error) {
-      loadPagamentos(selectedPacienteForPayment.id);
-      loadTodasSessoes();
-    } else {
-      alert("Erro ao adicionar pagamento");
-    }
-    setLoading(false);
-  };
-
-  const togglePago = async (pag: any) => {
-    const { error } = await supabase.from('pagamentos').update({ pago: !pag.pago }).eq('id', pag.id);
-    if (!error) {
-      loadPagamentos(pag.paciente_id);
-      loadTodasSessoes();
-    }
-  };
-
-  const handleDeletePagamento = async (id: string, pacienteId: string) => {
-    if (!window.confirm("Deseja realmente excluir este registro de pagamento?")) return;
-    const { error } = await supabase.from('pagamentos').delete().eq('id', id);
-    if (!error) {
-      loadPagamentos(pacienteId);
-      loadTodasSessoes();
-    }
-  };
-
-  const handleDeleteDayData = async () => {
-    if (!selectedChartDay) return;
-    const dateFormatted = new Date(selectedChartDay + 'T12:00:00').toLocaleDateString('pt-BR');
-    if (!window.confirm(`ATENÇÃO: Deseja apagar TODOS os registros de sessões e pagamentos do dia ${dateFormatted}?`)) return;
-    
-    setLoading(true);
-    const { error } = await supabase.from('pagamentos').delete().eq('data_sessao', selectedChartDay);
-    if (!error) {
-      loadTodasSessoes();
-      alert("Dados do dia removidos com sucesso.");
-    }
-    setLoading(false);
-  };
-
-  const handleClearAgendaMonth = async () => {
-    const mesNome = new Date(faturamentoAno, faturamentoMes - 1).toLocaleString('pt-BR', { month: 'long' });
-    if (!window.confirm(`ATENÇÃO: Você deseja apagar TODOS os dados de agenda de ${mesNome} de ${faturamentoAno}?`)) return;
-
-    setLoading(true);
-    const firstDay = `${faturamentoAno}-${String(faturamentoMes).padStart(2, '0')}-01`;
-    const lastDay = `${faturamentoAno}-${String(faturamentoMes).padStart(2, '0')}-${new Date(faturamentoAno, faturamentoMes, 0).getDate()}`;
-    
-    await supabase.from('pacientes').update({ data_consulta: null }).gte('data_consulta', firstDay).lte('data_consulta', lastDay);
-    await supabase.from('pagamentos').delete().gte('data_sessao', firstDay).lte('data_sessao', lastDay);
-
-    loadPacientes();
-    loadTodasSessoes();
-    alert("Dados do mês removidos com sucesso.");
-    setLoading(false);
-  };
-
-  const filteredPacientes = pacientes.filter(p => 
-    p.nome_completo?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const pacientesFixos = filteredPacientes.filter(p => p.dia_fixo);
-  const pacientesEsporadicos = filteredPacientes.filter(p => !p.dia_fixo);
-
-  const sessoesMesSelecionado = useMemo(() => {
-    return todasSessoes.filter(s => {
-      if (!s.data_sessao) return false;
-      const date = new Date(s.data_sessao + 'T12:00:00');
-      return date.getMonth() + 1 === faturamentoMes && date.getFullYear() === faturamentoAno;
-    });
-  }, [todasSessoes, faturamentoMes, faturamentoAno]);
-
-  const faturamentoTotal = useMemo(() => {
-    return sessoesMesSelecionado
-      .filter(s => s.pago)
-      .reduce((sum, s) => sum + Number(s.valor || 0), 0);
-  }, [sessoesMesSelecionado]);
-
-  const chartData = useMemo(() => {
-    const daysInMonth = new Date(faturamentoAno, faturamentoMes, 0).getDate();
-    const data = [];
-    const weekdaysMap: Record<number, string> = {
-      1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo"
-    };
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(faturamentoAno, faturamentoMes - 1, day);
-      const dayOfWeek = weekdaysMap[date.getDay()];
-      const dateStr = `${faturamentoAno}-${String(faturamentoMes).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const fixedCount = pacientesFixos.filter(p => p.dia_fixo === dayOfWeek).length;
-      const sporadicScheduled = pacientesEsporadicos.filter(p => p.data_consulta === dateStr).length;
-      data.push({ date: dateStr, consultas: fixedCount + sporadicScheduled });
-    }
-    return data;
-  }, [sessoesMesSelecionado, faturamentoMes, faturamentoAno, pacientesFixos, pacientesEsporadicos]);
-
-  const pacientesDoDia = useMemo(() => {
-    if (!selectedChartDay) return [];
-    
-    const realSessions = sessoesMesSelecionado
-      .filter(s => s.data_sessao === selectedChartDay)
-      .map(s => ({
-        id: s.paciente_id,
-        sessionId: s.id,
-        nome_completo: s.pacientes?.nome_completo || "Paciente",
-        tipo: 'esporadico',
-        valor: s.valor,
-        pago: s.pago,
-        horario: s.pacientes?.horario_consulta,
-        idade: s.pacientes?.idade,
-        telefone: s.pacientes?.telefone,
-        relato: s.pacientes?.relato_proxima_triagem,
-        pauta: s.pacientes?.pauta_proxima_semana
-      }));
-
-    const date = new Date(selectedChartDay + 'T12:00:00');
-    const dayOfWeek = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][date.getDay()];
-    
-    const fixed = pacientesFixos
-      .filter(p => p.dia_fixo === dayOfWeek)
-      .map(p => ({
-        id: p.id,
-        nome_completo: p.nome_completo,
-        tipo: 'fixo',
-        horario: p.horario_consulta,
-        valor: p.valor_sessao,
-        idade: p.idade,
-        telefone: p.telefone,
-        relato: p.relato_proxima_triagem,
-        pauta: p.pauta_proxima_semana,
-        pago: false
-      }));
-
-    const sporadicScheduled = pacientesEsporadicos
-      .filter(p => p.data_consulta === selectedChartDay)
-      .map(p => ({
-        id: p.id,
-        nome_completo: p.nome_completo,
-        tipo: 'esporadico',
-        horario: p.horario_consulta,
-        valor: p.valor_sessao,
-        idade: p.idade,
-        telefone: p.telefone,
-        relato: p.relato_proxima_triagem,
-        pauta: p.pauta_proxima_semana,
-        pago: false
-      }));
-
-    const combined = [...realSessions];
-    [...fixed, ...sporadicScheduled].forEach(p => {
-      if (!combined.some(c => c.id === p.id)) {
-        combined.push(p);
+      if (activeTab === 'financeiro') {
+        loadTodasSessoes();
+        loadNotas();
       }
+    }
+  }, [activeTab, isLoggedIn]);
+
+  const handleNewPacienteClick = () => {
+    setEditingPaciente(null);
+    setFormData({
+      nome_completo: "", idade: "", telefone: "", relato_proxima_triagem: "", pauta_proxima_semana: "",
+      data_consulta: "", horario_consulta: "", valor_sessao: "", dia_fixo: ""
     });
-
-    return combined.sort((a, b) => (a.horario || "").localeCompare(b.horario || ""));
-  }, [sessoesMesSelecionado, selectedChartDay, pacientesFixos, pacientesEsporadicos]);
-
-  const scheduleForToday = useMemo(() => {
-    const todayStr = getTodayStr();
-    const dayOfWeek = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][new Date().getDay()];
-    
-    const realSessions = sessoesMesSelecionado
-      .filter(s => s.data_sessao === todayStr)
-      .map(s => ({
-        id: s.paciente_id,
-        nome_completo: s.pacientes?.nome_completo || "Paciente",
-        tipo: 'esporadico',
-        horario: s.pacientes?.horario_consulta,
-        telefone: s.pacientes?.telefone
-      }));
-
-    const fixed = pacientesFixos.filter(p => p.dia_fixo === dayOfWeek);
-    const sporadic = pacientesEsporadicos.filter(p => p.data_consulta === todayStr);
-
-    const combined = [...realSessions];
-    [...fixed, ...sporadic].forEach(p => {
-      if (!combined.some(c => c.id === p.id)) {
-        combined.push({
-          id: p.id,
-          nome_completo: p.nome_completo,
-          tipo: p.dia_fixo ? 'fixo' : 'esporadico',
-          horario: p.horario_consulta,
-          telefone: p.telefone
-        });
-      }
-    });
-
-    return combined.sort((a, b) => (a.horario || "").localeCompare(b.horario || ""));
-  }, [sessoesMesSelecionado, pacientesFixos, pacientesEsporadicos]);
-
-  const handleDeletePaciente = async (id: string) => {
-    if (!window.confirm("Deseja realmente excluir este paciente?")) return;
-    const { error } = await supabase.from('pacientes').delete().eq('id', id);
-    if (!error) loadPacientes();
+    setIsModalOpen(true);
   };
 
   const handleEditClick = (p: any) => {
@@ -354,18 +129,338 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
   const handleSavePaciente = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const payload = { ...formData };
-    if (!payload.data_consulta) (payload as any).data_consulta = null;
+
+    const payload: any = { ...formData };
+    if (!payload.data_consulta) payload.data_consulta = null;
 
     if (editingPaciente) {
-      await supabase.from('pacientes').update(payload).eq('id', editingPaciente.id);
+      const { error } = await supabase.from('pacientes').update(payload).eq('id', editingPaciente.id);
+      if (!error) {
+        setIsModalOpen(false);
+        loadPacientes();
+      } else {
+        console.error(error);
+        alert("Erro ao editar paciente");
+      }
     } else {
-      await supabase.from('pacientes').insert([payload]);
+      const { error } = await supabase.from('pacientes').insert([payload]);
+      if (!error) {
+        setIsModalOpen(false);
+        loadPacientes();
+      } else {
+        console.error(error);
+        alert("Erro ao salvar paciente");
+      }
     }
-    setIsModalOpen(false);
-    loadPacientes();
     setLoading(false);
   };
+
+  const handleDeletePaciente = async (id: string) => {
+    if (confirm("Tem certeza que deseja excluir este paciente e todo seu histórico?")) {
+      setLoading(true);
+      await supabase.from('pacientes').delete().eq('id', id);
+      loadPacientes();
+      setLoading(false);
+    }
+  };
+
+  const openFinanceiro = (p: any, initialDate?: string) => {
+    setSelectedPacienteForPayment(p);
+    setPagamentoData({ 
+      data_sessao: initialDate || p.data_consulta || new Date().toISOString().split('T')[0], 
+      valor: p.valor_sessao || "", 
+      pago: true 
+    });
+    loadPagamentos(p.id);
+    setIsPaymentModalOpen(true);
+  };
+
+  const loadPagamentos = async (pacienteId: string) => {
+    const { data } = await supabase.from('pagamentos').select('*').eq('paciente_id', pacienteId).order('data_sessao', { ascending: false });
+    if (data) setPagamentos(data);
+  };
+
+  const handleSavePagamento = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPacienteForPayment) return;
+    setLoading(true);
+    
+    // Convert comma to dot for parsing
+    const valorNum = parseFloat(pagamentoData.valor.replace(',', '.') || '0');
+    
+    const { error } = await supabase.from('pagamentos').insert([{
+      paciente_id: selectedPacienteForPayment.id,
+      data_sessao: pagamentoData.data_sessao,
+      valor: valorNum,
+      pago: pagamentoData.pago
+    }]);
+
+    if (!error) {
+      setPagamentoData({ data_sessao: "", valor: selectedPacienteForPayment.valor_sessao || "", pago: false });
+      loadPagamentos(selectedPacienteForPayment.id);
+      if (activeTab === 'financeiro') loadTodasSessoes();
+    } else {
+      alert("Erro ao adicionar pagamento");
+    }
+    setLoading(false);
+  };
+
+  const togglePago = async (pag: any) => {
+    const { error } = await supabase.from('pagamentos').update({ pago: !pag.pago }).eq('id', pag.id);
+    if (!error) {
+      loadPagamentos(pag.paciente_id);
+      if (activeTab === 'financeiro') loadTodasSessoes();
+    }
+  };
+
+  const handleDeletePagamento = async (id: string, pacienteId: string) => {
+    if (!window.confirm("Deseja realmente excluir este registro de pagamento?")) return;
+    
+    const { error } = await supabase.from('pagamentos').delete().eq('id', id);
+    if (!error) {
+      loadPagamentos(pacienteId);
+      if (activeTab === 'financeiro') loadTodasSessoes();
+    }
+  };
+
+  const handleDeleteDayData = async () => {
+    if (!selectedChartDay) return;
+    const dateFormatted = new Date(selectedChartDay + 'T12:00:00').toLocaleDateString('pt-BR');
+    if (!window.confirm(`ATENÇÃO: Deseja apagar TODOS os registros de sessões e pagamentos do dia ${dateFormatted}?\n\nEsta ação não pode ser desfeita.`)) return;
+    
+    setLoading(true);
+    const { error } = await supabase
+      .from('pagamentos')
+      .delete()
+      .eq('data_sessao', selectedChartDay);
+
+    if (!error) {
+      loadTodasSessoes();
+      alert("Dados do dia removidos com sucesso.");
+    } else {
+      alert("Erro ao remover dados.");
+    }
+    setLoading(false);
+  };
+
+  const handleClearAgendaMonth = async () => {
+    const mesNome = new Date(faturamentoAno, faturamentoMes - 1).toLocaleString('pt-BR', { month: 'long' });
+    if (!window.confirm(`ATENÇÃO: Você deseja apagar TODOS os dados de agenda de ${mesNome} de ${faturamentoAno}?\n\n- Datas de consultas dos pacientes esporádicos deste mês serão removidas.\n- Todos os registros financeiros (pagamentos) deste mês serão deletados.\n\nEsta ação é irreversível!`)) return;
+
+    setLoading(true);
+    const firstDay = `${faturamentoAno}-${String(faturamentoMes).padStart(2, '0')}-01`;
+    const lastDay = `${faturamentoAno}-${String(faturamentoMes).padStart(2, '0')}-${new Date(faturamentoAno, faturamentoMes, 0).getDate()}`;
+    
+    // 1. Clear sporadic dates
+    await supabase.from('pacientes').update({ data_consulta: null }).gte('data_consulta', firstDay).lte('data_consulta', lastDay);
+    // 2. Clear payments
+    await supabase.from('pagamentos').delete().gte('data_sessao', firstDay).lte('data_sessao', lastDay);
+
+    loadPacientes();
+    loadTodasSessoes();
+    alert("Dados do mês removidos com sucesso.");
+    setLoading(false);
+  };
+
+  const handleDeleteMonthData = async () => {
+    const mesNome = new Date(faturamentoAno, faturamentoMes - 1).toLocaleString('pt-BR', { month: 'long' });
+    if (!window.confirm(`ATENÇÃO: Você está prestes a apagar TODOS os registros de sessões e pagamentos de ${mesNome} de ${faturamentoAno}.\n\nEsta ação é irreversível. Deseja continuar?`)) return;
+    
+    setLoading(true);
+    const daysInMonth = new Date(faturamentoAno, faturamentoMes, 0).getDate();
+    const startDate = `${faturamentoAno}-${String(faturamentoMes).padStart(2, '0')}-01`;
+    const endDate = `${faturamentoAno}-${String(faturamentoMes).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+    
+    const { error } = await supabase
+      .from('pagamentos')
+      .delete()
+      .gte('data_sessao', startDate)
+      .lte('data_sessao', endDate);
+
+    if (!error) {
+      loadTodasSessoes();
+      alert("Dados do mês removidos com sucesso.");
+    } else {
+      alert("Erro ao remover dados.");
+    }
+    setLoading(false);
+  };
+
+  const filteredPacientes = pacientes.filter(p => 
+    p.nome_completo?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const pacientesFixos = filteredPacientes.filter(p => p.dia_fixo);
+  const pacientesEsporadicos = filteredPacientes.filter(p => !p.dia_fixo);
+
+  // Faturamento Logic
+  const sessoesMesSelecionado = useMemo(() => {
+    return todasSessoes.filter(s => {
+      if (!s.data_sessao) return false;
+      const date = new Date(s.data_sessao);
+      // We must add timezone offset to avoid previous day issue
+      const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+      const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+      return adjustedDate.getMonth() + 1 === faturamentoMes && adjustedDate.getFullYear() === faturamentoAno;
+    });
+  }, [todasSessoes, faturamentoMes, faturamentoAno]);
+
+  const faturamentoTotal = useMemo(() => {
+    return sessoesMesSelecionado
+      .filter(s => s.pago)
+      .reduce((sum, s) => sum + Number(s.valor || 0), 0);
+  }, [sessoesMesSelecionado]);
+
+  const chartData = useMemo(() => {
+    const daysInMonth = new Date(faturamentoAno, faturamentoMes, 0).getDate();
+    const data = [];
+    
+    // Create a map for O(1) lookup of real sessions
+    const sessionCounts = new Map<string, number>();
+    sessoesMesSelecionado.forEach(s => {
+      if (s.data_sessao) {
+        sessionCounts.set(s.data_sessao, (sessionCounts.get(s.data_sessao) || 0) + 1);
+      }
+    });
+
+    const weekdaysMap: Record<number, string> = {
+      1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo"
+    };
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(faturamentoAno, faturamentoMes - 1, day);
+      const dayOfWeek = weekdaysMap[date.getDay()];
+      const dateStr = `${faturamentoAno}-${String(faturamentoMes).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      
+      // Count fixed patients for this day of week
+      const fixedCount = pacientesFixos.filter(p => p.dia_fixo === dayOfWeek).length;
+      // Count sporadic patients scheduled for this specific date
+      const sporadicScheduled = pacientesEsporadicos.filter(p => p.data_consulta === dateStr).length;
+      
+      const realCount = sessionCounts.get(dateStr) || 0;
+      const expectedTotal = fixedCount + sporadicScheduled;
+      
+      data.push({ 
+        date: dateStr, 
+        consultas: expectedTotal
+      });
+    }
+    
+    return data;
+  }, [sessoesMesSelecionado, faturamentoMes, faturamentoAno, pacientesFixos, pacientesEsporadicos]);
+
+  const pacientesDoDia = useMemo(() => {
+    if (!selectedChartDay) return [];
+    
+    // Real sessions from payments table
+    const realSessions = sessoesMesSelecionado
+      .filter(s => s.data_sessao === selectedChartDay)
+      .map(s => ({
+        id: s.paciente_id,
+        sessionId: s.id,
+        nome_completo: s.pacientes?.nome_completo || "Paciente",
+        tipo: 'esporadico',
+        valor: s.valor,
+        pago: s.pago,
+        horario: s.pacientes?.horario_consulta,
+        idade: s.pacientes?.idade,
+        telefone: s.pacientes?.telefone,
+        relato: s.pacientes?.relato_proxima_triagem,
+        pauta: s.pacientes?.pauta_proxima_semana
+      }));
+
+    // Fixed patients for that day of week
+    const date = new Date(selectedChartDay + 'T12:00:00');
+    const dayOfWeek = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][date.getDay()];
+    const fixed = pacientesFixos
+      .filter(p => p.dia_fixo === dayOfWeek)
+      .map(p => ({
+        id: p.id,
+        nome_completo: p.nome_completo,
+        tipo: 'fixo',
+        horario: p.horario_consulta,
+        valor: p.valor_sessao,
+        idade: p.idade,
+        telefone: p.telefone,
+        relato: p.relato_proxima_triagem,
+        pauta: p.pauta_proxima_semana,
+        pago: false // Projections are pending by default
+      }));
+
+    // Scheduled sporadic patients for this specific date
+    const sporadicScheduled = pacientesEsporadicos
+      .filter(p => p.data_consulta === selectedChartDay)
+      .map(p => ({
+        id: p.id,
+        nome_completo: p.nome_completo,
+        tipo: 'esporadico',
+        horario: p.horario_consulta,
+        valor: p.valor_sessao,
+        idade: p.idade,
+        telefone: p.telefone,
+        relato: p.relato_proxima_triagem,
+        pauta: p.pauta_proxima_semana,
+        pago: false // Projections are pending by default
+      }));
+
+    const combined = [...realSessions];
+    
+    // Add scheduled patients if they don't already have a session record for this day
+    [...fixed, ...sporadicScheduled].forEach(p => {
+      if (!combined.some(c => c.id === p.id)) {
+        combined.push(p);
+      }
+    });
+
+    return combined.sort((a, b) => (a.horario || "").localeCompare(b.horario || ""));
+  }, [sessoesMesSelecionado, selectedChartDay, pacientesFixos, pacientesEsporadicos]);
+
+  const scheduleForToday = useMemo(() => {
+    const todayStr = new Date().toLocaleDateString('en-CA');
+    const dayOfWeek = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][new Date().getDay()];
+    
+    // Real sessions for today
+    const realSessions = sessoesMesSelecionado
+      .filter(s => s.data_sessao === todayStr)
+      .map(s => ({
+        id: s.paciente_id,
+        nome_completo: s.pacientes?.nome_completo || "Paciente",
+        tipo: 'esporadico',
+        horario: s.pacientes?.horario_consulta,
+        telefone: s.pacientes?.telefone
+      }));
+
+    // Fixed patients for today's weekday
+    const fixed = pacientesFixos
+      .filter(p => p.dia_fixo === dayOfWeek)
+      .map(p => ({
+        id: p.id,
+        nome_completo: p.nome_completo,
+        tipo: 'fixo',
+        horario: p.horario_consulta,
+        telefone: p.telefone
+      }));
+
+    // Scheduled sporadic patients for today
+    const sporadicScheduled = pacientesEsporadicos
+      .filter(p => p.data_consulta === todayStr)
+      .map(p => ({
+        id: p.id,
+        nome_completo: p.nome_completo,
+        tipo: 'esporadico',
+        horario: p.horario_consulta,
+        telefone: p.telefone
+      }));
+
+    const combined = [...realSessions];
+    [...fixed, ...sporadicScheduled].forEach(p => {
+      if (!combined.some(c => c.id === p.id)) {
+        combined.push(p);
+      }
+    });
+
+    return combined.sort((a, b) => (a.horario || "").localeCompare(b.horario || ""));
+  }, [sessoesMesSelecionado, pacientesFixos, pacientesEsporadicos]);
 
   if (!isLoggedIn) {
     return (
@@ -373,19 +468,23 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
         <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-black text-slate-900">Acesso Restrito</h2>
-            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-500"><X size={24} /></button>
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
+              <X size={24} />
+            </button>
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-1">E-mail</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full border-2 border-slate-200 rounded-xl p-3 outline-none" required />
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" required />
             </div>
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-1">Senha</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full border-2 border-slate-200 rounded-xl p-3 outline-none" required />
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" required />
             </div>
             {error && <p className="text-red-500 text-sm font-bold">{error}</p>}
-            <button type="submit" className="w-full bg-brand-orange text-white font-black py-4 rounded-xl shadow-lg hover:bg-orange-600 transition-colors">Entrar</button>
+            <button type="submit" className="w-full bg-brand-orange text-white font-black py-4 rounded-xl shadow-lg hover:bg-orange-600 transition-colors">
+              Entrar
+            </button>
           </form>
         </div>
       </div>
@@ -407,18 +506,29 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
               <span className="font-black text-brand-orange text-sm">{new Date(p.data_consulta + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
             </div>
           )}
-          <button onClick={() => openFinanceiro(p)} className="p-3 bg-brand-orange/10 text-brand-orange hover:bg-brand-orange hover:text-white rounded-2xl transition-all shadow-sm">
+          <button onClick={() => openFinanceiro(p)} className="p-3 bg-brand-orange/10 text-brand-orange hover:bg-brand-orange hover:text-white rounded-2xl transition-all shadow-sm" title="Financeiro">
             <DollarSign size={20} />
           </button>
         </div>
       </div>
+      
       <div className="flex gap-2">
-        <a href={`https://wa.me/55${p.telefone?.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex-1 bg-emerald-50 text-emerald-600 font-bold py-2 rounded-xl hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center gap-2 text-xs">
+        <a 
+          href={`https://wa.me/55${p.telefone?.replace(/\D/g, '')}`} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex-1 bg-emerald-50 text-emerald-600 font-bold py-2 rounded-xl hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center gap-2 text-xs"
+        >
           <MessageCircle size={14} /> WhatsApp
         </a>
-        <button onClick={() => handleEditClick(p)} className="px-4 bg-slate-50 text-slate-500 font-bold py-2 rounded-xl hover:bg-slate-200 transition-all text-xs">Editar</button>
-        <button onClick={() => handleDeletePaciente(p.id)} className="px-4 bg-red-50 text-red-400 font-bold py-2 rounded-xl hover:bg-red-500 hover:text-white transition-all text-xs">Excluir</button>
+        <button onClick={() => handleEditClick(p)} className="px-4 bg-slate-50 text-slate-500 font-bold py-2 rounded-xl hover:bg-slate-200 transition-all text-xs">
+          Editar
+        </button>
+        <button onClick={() => handleDeletePaciente(p.id)} className="px-4 bg-red-50 text-red-400 font-bold py-2 rounded-xl hover:bg-red-500 hover:text-white transition-all text-xs">
+          Excluir
+        </button>
       </div>
+
       <div className="grid grid-cols-2 gap-2 text-[10px] uppercase font-bold tracking-wider">
         <div className="bg-slate-50 p-2 rounded-xl">
           <span className="text-slate-400 block mb-1">Horário</span>
@@ -434,7 +544,6 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <div className="fixed inset-0 bg-slate-100 z-[100] flex flex-col h-screen overflow-hidden">
-      {/* Header */}
       <div className="bg-white border-b border-slate-200 p-4 flex flex-col sm:flex-row justify-between items-center shrink-0 shadow-sm z-10 gap-4">
         <h1 className="text-2xl font-black text-slate-900 flex items-center gap-2">
           <Flower2 className="text-brand-orange" />
@@ -442,294 +551,539 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
         </h1>
         
         <div className="flex bg-slate-100 p-1 rounded-full">
-          <button onClick={() => setActiveTab('agenda')} className={`px-8 py-2 rounded-full font-black text-sm transition-all ${activeTab === 'agenda' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>Agenda</button>
-          <button onClick={() => { setActiveTab('financeiro'); setSelectedChartDay(null); }} className={`px-8 py-2 rounded-full font-black text-sm transition-all ${activeTab === 'financeiro' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>Financeiro</button>
+          <button 
+            onClick={() => setActiveTab('agenda')}
+            className={`px-6 py-2 rounded-full font-bold transition-all ${activeTab === 'agenda' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            <CalendarDays size={18} className="inline mr-2" />
+            Agenda
+          </button>
+          <button 
+            onClick={() => { setActiveTab('financeiro'); setSelectedChartDay(null); }}
+            className={`px-6 py-2 rounded-full font-bold transition-all ${activeTab === 'financeiro' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            <LineChartIcon size={18} className="inline mr-2" />
+            Financeiro
+          </button>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button onClick={() => { setIsLoggedIn(false); localStorage.removeItem('isLoggedIn'); onClose(); }} className="px-4 py-2 bg-slate-900 text-white rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-colors">Sair</button>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 bg-slate-100 rounded-full text-slate-500"><X size={24} /></button>
-        </div>
-      </div>
-
-      {/* Subheader Filters */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 shadow-sm z-10">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-4 items-center">
-          <div className="relative flex-1 group">
-            <input type="text" placeholder="Pesquisar paciente..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3 px-12 outline-none focus:border-brand-orange focus:bg-white transition-all font-medium" />
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><Filter size={20} /></div>
-          </div>
-          
-          <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-100">
-            <select value={faturamentoMes} onChange={e => setFaturamentoMes(Number(e.target.value))} className="bg-transparent border-none text-xs font-black p-1 outline-none uppercase tracking-widest text-slate-700">
-              {Array.from({length: 12}, (_, i) => i + 1).map(m => (
-                <option key={m} value={m}>{new Date(2000, m - 1).toLocaleString('pt-BR', { month: 'short' }).toUpperCase()}</option>
-              ))}
-            </select>
-            <select value={faturamentoAno} onChange={e => setFaturamentoAno(Number(e.target.value))} className="bg-transparent border-none text-xs font-black p-1 outline-none text-slate-700">
-              {[2024, 2025, 2026, 2027, 2028].map(y => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-            <button onClick={handleClearAgendaMonth} className="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border border-red-100">Limpar Mês</button>
-          </div>
-          
+        <div className="flex items-center gap-4">
           {activeTab === 'agenda' && (
-            <button onClick={() => { setEditingPaciente(null); setFormData({ nome_completo: "", idade: "", telefone: "", relato_proxima_triagem: "", pauta_proxima_semana: "", data_consulta: "", horario_consulta: "", valor_sessao: "", dia_fixo: "" }); setIsModalOpen(true); }} className="bg-brand-orange text-white px-8 py-3 rounded-2xl font-black flex items-center gap-2 hover:bg-orange-600 shadow-lg shadow-brand-orange/20 transition-all active:scale-95">
-              <Plus size={20} /> Novo Registro
+            <button onClick={handleNewPacienteClick} className="bg-slate-900 text-white px-6 py-2 rounded-full font-bold flex items-center gap-2 hover:bg-slate-800 shadow-md">
+              <Plus size={20} />
+              Novo
             </button>
           )}
+          <button 
+            onClick={() => { 
+              setIsLoggedIn(false); 
+              localStorage.removeItem('isLoggedIn');
+              localStorage.removeItem('isAdminPortalOpen');
+            }} 
+            className="px-4 py-2 bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-full font-bold text-xs transition-colors flex items-center gap-2"
+          >
+            Sair
+          </button>
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 bg-slate-100 rounded-full text-slate-500">
+            <X size={24} />
+          </button>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto p-6 md:p-10">
+      {activeTab === 'agenda' && (
+        <div className="bg-white border-b border-slate-200 px-6 py-4">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-4 items-center">
+            <div className="relative flex-1 w-full">
+              <input 
+                type="text" 
+                placeholder="Pesquisar paciente por nome..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3 px-12 outline-none focus:border-brand-orange focus:bg-white transition-all font-medium"
+              />
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                <Search size={20} />
+              </div>
+              {searchTerm && (
+                <button 
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-100 w-full md:w-auto">
+              <select value={faturamentoMes} onChange={e => setFaturamentoMes(Number(e.target.value))} className="bg-transparent border-none text-xs font-bold text-slate-700 outline-none p-1">
+                {Array.from({length: 12}, (_, i) => i + 1).map(m => (
+                  <option key={m} value={m}>{new Date(2000, m - 1).toLocaleString('pt-BR', { month: 'short' }).toUpperCase()}</option>
+                ))}
+              </select>
+              <select value={faturamentoAno} onChange={e => setFaturamentoAno(Number(e.target.value))} className="bg-transparent border-none text-xs font-bold text-slate-700 outline-none p-1">
+                {[2024, 2025, 2026, 2027, 2028].map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+              <button 
+                onClick={handleClearAgendaMonth}
+                className="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl text-[10px] font-black transition-all uppercase tracking-widest whitespace-nowrap"
+              >
+                Limpar Mês
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 overflow-auto p-6">
         <div className="max-w-7xl mx-auto">
+          
           {activeTab === 'agenda' && (
-            <div className="space-y-12">
-              {/* Agenda Section */}
-              <section className="bg-white rounded-[3rem] p-8 md:p-10 shadow-xl border border-slate-100 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-brand-orange/5 rounded-bl-full -z-0" />
-                <h2 className="text-3xl font-black text-slate-900 mb-8 flex items-center gap-3">
-                  <CalendarDays className="text-brand-orange" /> Agenda de Hoje
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {scheduleForToday.map(p => (
-                    <div key={p.id} className={`p-6 rounded-[2rem] border-2 flex items-center justify-between transition-all hover:scale-[1.02] ${p.tipo === 'fixo' ? 'bg-slate-900 border-slate-800 text-white shadow-xl shadow-slate-900/10' : 'bg-brand-orange/5 border-brand-orange/10 text-slate-900'}`}>
-                      <div>
-                        <span className="font-black text-lg block">{p.nome_completo}</span>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${p.tipo === 'fixo' ? 'bg-white/10 text-brand-orange' : 'bg-brand-orange text-white'}`}>{p.tipo}</span>
-                          <span className="text-[11px] font-bold opacity-60">{p.horario}</span>
+            <div className="space-y-10">
+              {/* Agenda de Hoje - Timeline */}
+              <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-brand-orange/5 rounded-bl-full -z-0" />
+                <div className="flex items-center gap-4 mb-8 relative z-10">
+                  <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                    <CalendarDays size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Agenda de Hoje</h2>
+                    <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-1 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar relative z-10">
+                  {Array.from({ length: 24 }).map((_, i) => {
+                    const hour = String(i).padStart(2, '0') + ":00";
+                    const patientsAtThisHour = scheduleForToday.filter(s => s.horario?.startsWith(String(i).padStart(2, '0')));
+                    
+                    return (
+                      <div key={hour} className="group flex gap-4 min-h-[50px]">
+                        <div className="w-12 pt-1 text-right">
+                          <span className="text-[10px] font-black text-slate-300 group-hover:text-brand-orange transition-colors">{hour}</span>
+                        </div>
+                        <div className="flex-1 relative pb-2">
+                          <div className="absolute left-0 top-3 bottom-0 w-px bg-slate-100 group-last:bg-transparent" />
+                          <div className="absolute left-[-4px] top-3 w-2 h-2 rounded-full border-2 border-slate-200 bg-white group-hover:border-brand-orange transition-colors" />
+                          
+                          <div className="ml-6 space-y-2">
+                            {patientsAtThisHour.map(p => (
+                              <div key={p.id} className={`p-3 rounded-2xl border flex items-center justify-between transition-all group/item hover:scale-[1.02] ${p.tipo === 'fixo' ? 'bg-slate-900 text-white border-slate-800' : 'bg-brand-orange/5 border-brand-orange/10 text-slate-900'}`}>
+                                <div>
+                                  <span className="font-black text-sm block leading-none mb-1">{p.nome_completo}</span>
+                                  <span className={`text-[9px] uppercase font-bold tracking-widest ${p.tipo === 'fixo' ? 'text-slate-400' : 'text-brand-orange'}`}>{p.horario} • {p.tipo}</span>
+                                </div>
+                                <div className="flex gap-2">
+                                  <a 
+                                    href={`https://wa.me/55${p.telefone?.replace(/\D/g, '')}`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className={`p-2 rounded-xl transition-colors ${p.tipo === 'fixo' ? 'bg-white/10 hover:bg-emerald-500' : 'bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white'}`}
+                                  >
+                                    <MessageCircle size={14} />
+                                  </a>
+                                  <button onClick={() => openFinanceiro(p)} className={`p-2 rounded-xl transition-colors ${p.tipo === 'fixo' ? 'bg-white/10 hover:bg-white/20' : 'bg-brand-orange/10 hover:bg-brand-orange/20'}`}>
+                                    <DollarSign size={14} />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                      <a href={`https://wa.me/55${p.telefone?.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-emerald-500 rounded-2xl text-white flex items-center justify-center hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20 active:scale-90">
-                        <MessageCircle size={22} />
-                      </a>
-                    </div>
-                  ))}
-                  {scheduleForToday.length === 0 && <p className="col-span-full text-center py-10 text-slate-400 font-bold italic">Nenhuma consulta programada para hoje.</p>}
+                    );
+                  })}
                 </div>
               </section>
 
-              {/* Pacientes List */}
               <section>
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="h-px flex-1 bg-slate-200" />
-                  <h2 className="text-xl font-black text-slate-400 uppercase tracking-[0.3em]">Gestão de Pacientes</h2>
-                  <div className="h-px flex-1 bg-slate-200" />
+                <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-brand-orange block"></span>
+                  Pacientes Fixos
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {pacientesFixos.map(renderPatientCard)}
+                  {pacientesFixos.length === 0 && (
+                    <p className="text-slate-400 col-span-full">Nenhum paciente fixo cadastrado.</p>
+                  )}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {pacientesFixos.length > 0 && <div className="col-span-full"><h3 className="text-xs font-black uppercase text-brand-orange tracking-[0.2em] mb-2">Pacientes Fixos</h3></div>}
-                  {pacientesFixos.map(p => renderPatientCard(p))}
-                  {pacientesEsporadicos.length > 0 && <div className="col-span-full mt-10"><h3 className="text-xs font-black uppercase text-brand-orange tracking-[0.2em] mb-2">Pacientes Esporádicos</h3></div>}
-                  {pacientesEsporadicos.map(p => renderPatientCard(p))}
+              </section>
+
+              <section>
+                <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-slate-400 block"></span>
+                  Pacientes Esporádicos
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {pacientesEsporadicos.map(renderPatientCard)}
+                  {pacientesEsporadicos.length === 0 && (
+                    <p className="text-slate-400 col-span-full">Nenhum paciente esporádico cadastrado.</p>
+                  )}
                 </div>
+              </section>
+
+              {/* Anotações Importantes na Agenda */}
+              <section className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                <span className="text-slate-500 font-bold uppercase text-xs mb-3 block flex items-center gap-2">
+                  <Edit2 size={14} /> Anotações Importantes
+                </span>
+                <textarea 
+                  value={notasImportantes}
+                  onChange={(e) => saveNotas(e.target.value)}
+                  placeholder="Digite aqui anotações, lembretes ou tarefas..."
+                  className="w-full bg-slate-50 rounded-2xl p-4 outline-none focus:bg-white border-2 border-transparent focus:border-brand-orange/20 transition-all text-slate-700 text-sm min-h-[120px] resize-none"
+                />
               </section>
             </div>
           )}
 
           {activeTab === 'financeiro' && (
-            <div className="space-y-10">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Stats Card */}
-                <div className="bg-slate-900 p-8 rounded-[3rem] shadow-2xl relative overflow-hidden flex flex-col justify-center border-4 border-slate-800">
-                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-brand-orange/10 to-transparent pointer-events-none" />
-                  <span className="text-brand-orange font-black uppercase text-[10px] tracking-[0.3em] mb-3 block">Faturamento Consolidado</span>
-                  <div className="text-5xl font-black text-white mb-2">{faturamentoTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
-                  <p className="text-slate-400 text-xs font-medium">Referente ao período selecionado</p>
+            <div className="space-y-8">
+              {/* Filtros e Total */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Total Section */}
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-center">
+                  <span className="text-slate-500 font-bold uppercase text-xs mb-2 block">Faturamento Total do Mês</span>
+                  <div className="text-4xl font-black text-emerald-600">
+                    {faturamentoTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </div>
+                  <span className="text-slate-400 text-sm mt-2">Apenas sessões marcadas como "Pagas"</span>
                 </div>
                 
-                {/* Chart Card */}
-                <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100 lg:col-span-2">
-                  <div className="flex justify-between items-center mb-8">
-                    <h3 className="font-black text-slate-900 uppercase text-xs tracking-widest flex items-center gap-2">
-                      <LineChartIcon size={16} className="text-brand-orange" /> Performance Mensal
-                    </h3>
-                    <div className="text-[10px] font-bold text-slate-400 uppercase">Meta: {metaConsultas} consultas</div>
+                {/* Meta de Consultas */}
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col">
+                  <div className="flex justify-between items-start mb-4">
+                    <span className="text-slate-500 font-bold uppercase text-xs block">Meta de Consultas Pagas</span>
+                    <input 
+                      type="number" 
+                      value={metaConsultas} 
+                      onChange={e => saveMeta(Number(e.target.value))}
+                      className="w-16 bg-slate-50 border-none rounded-lg p-1 text-center font-bold text-slate-700 focus:ring-2 focus:ring-brand-orange outline-none"
+                    />
                   </div>
-                  <div className="h-[250px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData} onClick={(data) => data && data.activeLabel && setSelectedChartDay(data.activeLabel)}>
-                        <defs>
-                          <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#ff6600" stopOpacity={1}/>
-                            <stop offset="100%" stopColor="#ff9900" stopOpacity={0.8}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} tickFormatter={(val) => new Date(val + 'T12:00:00').getDate().toString()} />
-                        <YAxis domain={[0, metaConsultas]} ticks={[0, 5, 10, 15, 20]} axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} />
-                        <RechartsTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }} labelFormatter={(label) => new Date(label + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })} />
-                        <Bar dataKey="consultas" fill="url(#barGradient)" radius={[6, 6, 0, 0]} barSize={20}>
-                          {chartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.date === selectedChartDay ? '#0f172a' : 'url(#barGradient)'} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
+                  
+                  {(() => {
+                    const pagasCount = sessoesMesSelecionado.filter(s => s.pago).length;
+                    const percent = Math.min(Math.round((pagasCount / (metaConsultas || 1)) * 100), 100);
+                    return (
+                      <>
+                        <div className="flex items-end gap-2 mb-2">
+                          <span className="text-3xl font-black text-slate-800">{pagasCount}</span>
+                          <span className="text-slate-400 font-bold mb-1">/ {metaConsultas}</span>
+                          <span className="ml-auto text-brand-orange font-black">{percent}%</span>
+                        </div>
+                        <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-brand-orange transition-all duration-1000" 
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+
+                {/* Filters Section */}
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-slate-500 font-bold uppercase text-xs flex items-center gap-2">
+                      <Filter size={14} /> Filtros de Período
+                    </span>
+                    <button 
+                      onClick={handleDeleteMonthData}
+                      className="text-[10px] font-black text-red-400 hover:text-red-600 uppercase tracking-widest transition-colors"
+                    >
+                      Apagar Dados do Mês
+                    </button>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Mês</label>
+                      <select value={faturamentoMes} onChange={e => setFaturamentoMes(Number(e.target.value))} className="w-full border-2 border-slate-200 rounded-xl p-3 outline-none bg-slate-50">
+                        {Array.from({length: 12}, (_, i) => i + 1).map(m => (
+                          <option key={m} value={m}>{new Date(2000, m - 1).toLocaleString('pt-BR', { month: 'long' })}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Ano</label>
+                      <select value={faturamentoAno} onChange={e => setFaturamentoAno(Number(e.target.value))} className="w-full border-2 border-slate-200 rounded-xl p-3 outline-none bg-slate-50">
+                        {[2024, 2025, 2026, 2027, 2028].map(y => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Day Details */}
+              {/* Gráfico */}
+              <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                <span className="text-slate-500 font-bold uppercase text-xs mb-6 block">Consultas por Dia (Clique para filtrar)</span>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} onClick={(data) => {
+                      if (data && data.activeLabel) {
+                        setSelectedChartDay(data.activeLabel === selectedChartDay ? null : data.activeLabel);
+                      }
+                    }}>
+                      <defs>
+                        <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#ff6600" stopOpacity={1} />
+                          <stop offset="100%" stopColor="#cc5200" stopOpacity={1} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                      <XAxis 
+                        dataKey="date" 
+                        tickFormatter={(val) => new Date(val + 'T12:00:00').getDate().toString()} 
+                        axisLine={false} 
+                        tickLine={false}
+                        interval={0}
+                        tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }}
+                      />
+                      <YAxis domain={[0, 20]} ticks={[0, 5, 10, 15, 20]} axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} />
+                      <RechartsTooltip 
+                        labelFormatter={(label) => new Date(label + 'T12:00:00').toLocaleDateString('pt-BR')}
+                        cursor={{ fill: '#f8fafc', radius: 4 }}
+                        contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      />
+                      <Bar dataKey="consultas" fill="url(#barGradient)" radius={[4, 4, 0, 0]} cursor="pointer" barSize={20}>
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.date === selectedChartDay ? '#993d00' : 'url(#barGradient)'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Pacientes do Dia Selecionado */}
               {selectedChartDay && (
-                <div className="bg-white p-10 rounded-[3rem] shadow-2xl border-2 border-brand-orange/20 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
-                    <div>
-                      <h3 className="font-black text-3xl text-slate-900">{new Date(selectedChartDay + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</h3>
-                      <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Detalhamento de Consultas e Receitas</p>
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 border-l-4 border-l-brand-orange">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-slate-800 font-bold text-lg">
+                      Sessões do dia {new Date(selectedChartDay + 'T12:00:00').toLocaleDateString('pt-BR')}
+                    </span>
+                    <div className="flex items-center gap-4">
+                      <button 
+                        onClick={handleDeleteDayData}
+                        className="text-[10px] font-black text-red-400 hover:text-red-600 uppercase tracking-widest transition-colors"
+                      >
+                        Apagar dados deste dia
+                      </button>
+                      <button onClick={() => setSelectedChartDay(null)} className="text-sm text-slate-500 hover:text-slate-800 font-medium">Limpar filtro</button>
                     </div>
-                    <button onClick={handleDeleteDayData} className="px-6 py-2 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white rounded-full text-[10px] font-black uppercase tracking-widest transition-all border border-red-100">Excluir Tudo deste Dia</button>
                   </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
                     {pacientesDoDia.map(s => (
-                      <div key={s.sessionId || s.id} className="group p-8 bg-slate-50 rounded-[2.5rem] border-2 border-transparent hover:border-brand-orange/20 hover:bg-white hover:shadow-xl transition-all duration-300">
-                        <div className="flex justify-between items-start mb-6">
+                      <div key={s.sessionId || `${s.id}-${s.tipo}`} className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 flex flex-col gap-4">
+                        <div className="flex justify-between items-start">
                           <div>
-                            <div className="font-black text-xl text-slate-900 group-hover:text-brand-orange transition-colors">{s.nome_completo}</div>
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className="bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter">{s.horario}</span>
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{s.tipo}</span>
-                              {s.valor && <span className="text-[10px] font-black text-emerald-600">R$ {s.valor}</span>}
+                            <div className="font-black text-xl text-slate-900 leading-tight">{s.nome_completo}</div>
+                            <div className="text-slate-500 text-xs font-bold mt-1">
+                              {s.idade} {s.idade ? 'anos •' : ''} {s.telefone}
+                            </div>
+                            <div className="text-[10px] uppercase font-bold tracking-widest text-brand-orange mt-2 bg-brand-orange/5 px-2 py-0.5 rounded-full inline-block">
+                              {s.horario} • {s.tipo} {s.valor ? `• R$ ${s.valor}` : ''}
                             </div>
                           </div>
-                          {s.pago ? (
-                            <div className="flex flex-col items-end">
-                              <span className="bg-emerald-100 text-emerald-600 px-4 py-1.5 rounded-full text-[10px] font-black border border-emerald-200">PAGO</span>
-                              {s.sessionId && <button onClick={() => handleDeletePagamento(s.sessionId!, s.id)} className="mt-2 text-[9px] font-black text-red-400 hover:text-red-600 uppercase">Estornar</button>}
-                            </div>
-                          ) : (
-                            <button onClick={() => openFinanceiro(s, selectedChartDay)} className="bg-white text-brand-orange px-5 py-2 rounded-full text-[10px] font-black border-2 border-brand-orange/30 hover:bg-brand-orange hover:text-white hover:border-brand-orange transition-all shadow-sm">REGISTRAR PAGAMENTO</button>
-                          )}
+                          <div>
+                            {s.pago 
+                              ? <span className="bg-emerald-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black shadow-sm">PAGO</span>
+                              : (
+                                <button 
+                                  onClick={() => openFinanceiro(s, selectedChartDay)}
+                                  className="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-[10px] font-black border border-amber-200 hover:bg-amber-200 transition-colors"
+                                >
+                                  REGISTRAR PAGAMENTO
+                                </button>
+                              )
+                            }
+                          </div>
                         </div>
-                        <div className="space-y-4">
-                          <div className="bg-white/80 p-5 rounded-2xl border border-slate-100">
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-white/80 p-4 rounded-2xl border border-slate-100">
                             <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Relato Próxima Triagem</span>
                             <p className="text-xs text-slate-600 italic leading-relaxed">{s.relato || 'Nenhum relato preenchido.'}</p>
                           </div>
-                          <div className="bg-white/80 p-5 rounded-2xl border border-slate-100">
+                          <div className="bg-white/80 p-4 rounded-2xl border border-slate-100">
                             <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Pauta Próxima Semana</span>
                             <p className="text-xs text-slate-600 italic leading-relaxed">{s.pauta || 'Nenhuma pauta preenchida.'}</p>
                           </div>
                         </div>
                       </div>
                     ))}
-                    {pacientesDoDia.length === 0 && <p className="col-span-full text-center py-20 text-slate-400 font-bold italic">Nenhum paciente vinculado a este dia.</p>}
+                    {pacientesDoDia.length === 0 && <p className="text-sm text-slate-500">Nenhuma consulta encontrada para este dia.</p>}
                   </div>
                 </div>
               )}
             </div>
           )}
+
         </div>
       </div>
 
-      {/* Modals */}
+      {/* Modal de Adicionar/Editar Paciente */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/70 z-[120] flex items-center justify-center p-4 backdrop-blur-md overflow-y-auto">
-          <div className="bg-white rounded-[3rem] p-10 max-w-2xl w-full my-8 shadow-2xl animate-in zoom-in-95 duration-300">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-black text-slate-900">{editingPaciente ? 'Editar Cadastro' : 'Novo Paciente'}</h2>
-              <button onClick={() => setIsModalOpen(false)} className="p-3 hover:bg-slate-100 rounded-2xl text-slate-400"><X size={28} /></button>
+        <div className="fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-3xl p-8 max-w-2xl w-full my-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-black text-slate-900">{editingPaciente ? 'Editar Paciente' : 'Novo Paciente'}</h2>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
+                <X size={24} />
+              </button>
             </div>
-            <form onSubmit={handleSavePaciente} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleSavePaciente} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-2">Nome Completo</label>
-                <input type="text" value={formData.nome_completo} onChange={e => setFormData({...formData, nome_completo: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-brand-orange focus:bg-white transition-all font-bold" required />
+                <label className="block text-sm font-bold text-slate-700 mb-1">Nome Completo *</label>
+                <input type="text" value={formData.nome_completo} onChange={e => setFormData({...formData, nome_completo: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" required />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-2">Idade</label>
-                <input type="text" value={formData.idade} onChange={e => setFormData({...formData, idade: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-brand-orange focus:bg-white transition-all font-bold" />
+                <label className="block text-sm font-bold text-slate-700 mb-1">Idade</label>
+                <input type="text" value={formData.idade} onChange={e => setFormData({...formData, idade: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-2">WhatsApp</label>
-                <input type="text" value={formData.telefone} onChange={e => setFormData({...formData, telefone: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-brand-orange focus:bg-white transition-all font-bold" />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-2">Relato da Triagem</label>
-                <textarea value={formData.relato_proxima_triagem} onChange={e => setFormData({...formData, relato_proxima_triagem: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 h-28 resize-none outline-none focus:border-brand-orange focus:bg-white transition-all font-medium text-sm" />
+                <label className="block text-sm font-bold text-slate-700 mb-1">Telefone</label>
+                <input type="text" value={formData.telefone} onChange={e => setFormData({...formData, telefone: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-2">Pauta para Próxima Semana</label>
-                <textarea value={formData.pauta_proxima_semana} onChange={e => setFormData({...formData, pauta_proxima_semana: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 h-28 resize-none outline-none focus:border-brand-orange focus:bg-white transition-all font-medium text-sm" />
+                <label className="block text-sm font-bold text-slate-700 mb-1">Descrição de relato para a próxima triagem</label>
+                <textarea value={formData.relato_proxima_triagem} onChange={e => setFormData({...formData, relato_proxima_triagem: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none h-24 resize-none" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-bold text-slate-700 mb-1">Descrição de pauta para a próxima semana</label>
+                <textarea value={formData.pauta_proxima_semana} onChange={e => setFormData({...formData, pauta_proxima_semana: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none h-24 resize-none" />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-2">Data da Consulta</label>
-                <input type="date" value={formData.data_consulta} onChange={e => setFormData({...formData, data_consulta: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-brand-orange focus:bg-white transition-all font-bold" />
+                <label className="block text-sm font-bold text-slate-700 mb-1">Data da Consulta</label>
+                <input type="date" value={formData.data_consulta} onChange={e => setFormData({...formData, data_consulta: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-2">Horário</label>
-                <input type="time" value={formData.horario_consulta} onChange={e => setFormData({...formData, horario_consulta: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-brand-orange focus:bg-white transition-all font-bold" />
+                <label className="block text-sm font-bold text-slate-700 mb-1">Horário</label>
+                <input type="time" value={formData.horario_consulta} onChange={e => setFormData({...formData, horario_consulta: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-2">Valor da Sessão</label>
-                <input type="text" value={formData.valor_sessao} onChange={e => setFormData({...formData, valor_sessao: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-brand-orange focus:bg-white transition-all font-bold" />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-2">Dia Fixo de Atendimento</label>
-                <select value={formData.dia_fixo} onChange={e => setFormData({...formData, dia_fixo: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 outline-none focus:border-brand-orange focus:bg-white transition-all font-bold">
-                  <option value="">NÃO É FIXO (ESPORÁDICO)</option>
-                  <option value="Segunda">SEGUNDA-FEIRA</option><option value="Terça">TERÇA-FEIRA</option><option value="Quarta">QUARTA-FEIRA</option><option value="Quinta">QUINTA-FEIRA</option><option value="Sexta">SEXTA-FEIRA</option><option value="Sábado">SÁBADO</option>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Fixo na Semana?</label>
+                <select value={formData.dia_fixo} onChange={e => setFormData({...formData, dia_fixo: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none bg-white">
+                  <option value="">Não Fixo</option>
+                  <option value="Segunda">Segunda-feira</option>
+                  <option value="Terça">Terça-feira</option>
+                  <option value="Quarta">Quarta-feira</option>
+                  <option value="Quinta">Quinta-feira</option>
+                  <option value="Sexta">Sexta-feira</option>
+                  <option value="Sábado">Sábado</option>
                 </select>
               </div>
-              <div className="md:col-span-2 flex gap-4 pt-6">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 border-2 border-slate-100 py-4 rounded-2xl font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 transition-all">Cancelar</button>
-                <button type="submit" disabled={loading} className="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all disabled:opacity-50">Salvar Dados</button>
+              <div className="md:col-span-2 pt-4 flex gap-4">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 border-2 border-slate-200 text-slate-700 font-black py-4 rounded-xl hover:bg-slate-50 transition-colors">
+                  Cancelar
+                </button>
+                <button type="submit" disabled={loading} className="flex-1 bg-brand-orange text-white font-black py-4 rounded-xl shadow-lg hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  {loading ? 'Salvando...' : 'Salvar'}
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
+      {/* Modal de Financeiro do Paciente */}
       {isPaymentModalOpen && selectedPacienteForPayment && (
-        <div className="fixed inset-0 bg-slate-900/70 z-[130] flex items-center justify-center p-4 backdrop-blur-md">
-          <div className="bg-white rounded-[3rem] p-10 max-w-xl w-full shadow-2xl animate-in fade-in zoom-in-95 duration-300">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-black text-slate-900">Registrar Pagamento</h2>
-              <button onClick={() => setIsPaymentModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400"><X size={24} /></button>
+        <div className="fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-3xl p-8 max-w-xl w-full my-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-black text-slate-900">Financeiro: {selectedPacienteForPayment.nome_completo}</h2>
+              <button onClick={() => setIsPaymentModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
+                <X size={24} />
+              </button>
             </div>
-            <p className="text-slate-500 font-bold mb-8 flex items-center gap-2">Paciente: <span className="text-brand-orange">{selectedPacienteForPayment.nome_completo}</span></p>
-            
-            <form onSubmit={handleSavePagamento} className="bg-slate-50 p-8 rounded-[2.5rem] mb-8 border border-slate-100 shadow-inner">
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1 ml-2">Data da Sessão (Ref. Gráfico)</label>
-                  <input type="date" value={pagamentoData.data_sessao} onChange={e => setPagamentoData({...pagamentoData, data_sessao: e.target.value})} className="w-full p-4 border-2 border-slate-100 rounded-2xl outline-none focus:border-brand-orange bg-white font-bold" />
+
+            {/* Adicionar Pagamento */}
+            <form onSubmit={handleSavePagamento} className="bg-slate-50 p-6 rounded-2xl mb-8 border border-slate-100">
+              <h3 className="font-bold text-slate-800 mb-4 text-sm uppercase">Registrar Novo Pagamento</h3>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="col-span-2">
+                  <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">
+                    Data da Sessão (Referência no Gráfico) *
+                  </label>
+                  <div className="relative">
+                    <input 
+                      type="date" 
+                      value={pagamentoData.data_sessao} 
+                      onChange={e => setPagamentoData({...pagamentoData, data_sessao: e.target.value})} 
+                      className={`w-full border-2 border-slate-200 rounded-xl p-3 outline-none focus:border-brand-orange bg-white ${selectedChartDay ? 'border-brand-orange bg-orange-50/30' : ''}`} 
+                      required 
+                    />
+                    {selectedChartDay && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-black text-brand-orange bg-white px-2 py-1 rounded-lg border border-orange-100 uppercase">
+                        Vinculado ao Gráfico
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[9px] text-slate-400 mt-1 font-bold">
+                    * Este pagamento marcará como "PAGO" o dia selecionado acima.
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1 ml-2">Valor Recebido</label>
-                  <input type="text" value={pagamentoData.valor} onChange={e => setPagamentoData({...pagamentoData, valor: e.target.value})} className="w-full p-4 border-2 border-slate-100 rounded-2xl outline-none focus:border-brand-orange bg-white font-bold" />
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Valor *</label>
+                  <input type="text" value={pagamentoData.valor} onChange={e => setPagamentoData({...pagamentoData, valor: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-2 outline-none focus:border-brand-orange" required />
                 </div>
-                <label className="flex items-center gap-3 font-black text-slate-700 cursor-pointer select-none">
-                  <input type="checkbox" checked={pagamentoData.pago} onChange={e => setPagamentoData({...pagamentoData, pago: e.target.checked})} className="w-6 h-6 rounded-lg accent-emerald-500" />
-                  Confirmar Recebimento?
+              </div>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={pagamentoData.pago} onChange={e => setPagamentoData({...pagamentoData, pago: e.target.checked})} className="w-5 h-5 accent-brand-orange" />
+                  <span className="font-bold text-slate-700">Já foi pago?</span>
                 </label>
-                <button type="submit" disabled={loading} className="w-full bg-emerald-500 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/20 hover:bg-emerald-600 transition-all active:scale-95">Efetivar Registro</button>
+                <button type="submit" disabled={loading} className="ml-auto bg-slate-900 text-white px-6 py-2 rounded-xl font-bold hover:bg-slate-800 transition-colors disabled:opacity-50">
+                  Registrar
+                </button>
               </div>
             </form>
-            
-            <div className="space-y-3">
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Últimos Lançamentos</h4>
-              <div className="max-h-40 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                {pagamentos.map(p => (
-                  <div key={p.id} className="flex justify-between items-center p-4 bg-white rounded-2xl text-sm border border-slate-100 shadow-sm">
-                    <div className="flex flex-col">
-                      <span className="font-black text-slate-800">{new Date(p.data_sessao + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
-                      <span className="text-[10px] font-bold text-emerald-600">R$ {p.valor}</span>
+
+            {/* Lista de Pagamentos */}
+            <div>
+              <h3 className="font-bold text-slate-800 mb-4 text-sm uppercase">Histórico</h3>
+              <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                {pagamentos.map(pag => (
+                  <div key={pag.id} className="flex items-center justify-between p-4 bg-white border-2 border-slate-100 rounded-xl">
+                    <div>
+                      <div className="font-bold text-slate-800">{new Date(pag.data_sessao + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
+                      <div className="text-sm text-slate-500">R$ {pag.valor}</div>
                     </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => togglePago(p)} className={`px-4 py-1.5 rounded-full font-black text-[9px] uppercase tracking-widest transition-all ${p.pago ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-amber-100 text-amber-600 border border-amber-200'}`}>{p.pago ? 'CONCLUÍDO' : 'PENDENTE'}</button>
-                      <button onClick={() => handleDeletePagamento(p.id, p.paciente_id)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"><Trash2 size={16} /></button>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => togglePago(pag)}
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold border-2 transition-colors ${
+                          pag.pago 
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100' 
+                          : 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
+                        }`}
+                      >
+                        {pag.pago ? 'PAGO' : 'PENDENTE'}
+                      </button>
+                      <button 
+                        onClick={() => handleDeletePagamento(pag.id, pag.paciente_id)}
+                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Excluir Pagamento"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </div>
                 ))}
-                {pagamentos.length === 0 && <p className="text-center py-4 text-slate-400 text-xs font-bold italic">Sem histórico financeiro.</p>}
+                {pagamentos.length === 0 && (
+                  <p className="text-slate-400 text-sm text-center py-4">Nenhum registro encontrado.</p>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 };
