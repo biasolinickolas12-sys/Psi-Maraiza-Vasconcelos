@@ -254,24 +254,28 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
       const dayOfWeek = weekdaysMap[date.getDay()];
       const dateStr = `${faturamentoAno}-${String(faturamentoMes).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       
-      // Count fixed patients for this specific day of the week
+      // Count fixed patients for this day of week
       const fixedCount = pacientesFixos.filter(p => p.dia_fixo === dayOfWeek).length;
+      // Count sporadic patients scheduled for this specific date
+      const sporadicScheduled = pacientesEsporadicos.filter(p => p.data_consulta === dateStr).length;
+      
       const realCount = sessionCounts.get(dateStr) || 0;
+      const expectedTotal = fixedCount + sporadicScheduled;
       
       data.push({ 
         date: dateStr, 
-        consultas: Math.max(realCount, fixedCount) // Use whichever is higher to avoid double counting expected vs actual
+        consultas: Math.max(realCount, expectedTotal)
       });
     }
     
     return data;
-  }, [sessoesMesSelecionado, faturamentoMes, faturamentoAno, pacientesFixos]);
+  }, [sessoesMesSelecionado, faturamentoMes, faturamentoAno, pacientesFixos, pacientesEsporadicos]);
 
   const pacientesDoDia = useMemo(() => {
     if (!selectedChartDay) return [];
     
-    // Sporadic patients
-    const sporadic = sessoesMesSelecionado
+    // Real sessions from payments table
+    const realSessions = sessoesMesSelecionado
       .filter(s => s.data_sessao === selectedChartDay)
       .map(s => ({
         id: s.paciente_id,
@@ -282,7 +286,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
         horario: s.pacientes?.horario_consulta
       }));
 
-    // Fixed patients
+    // Fixed patients for that day of week
     const date = new Date(selectedChartDay + 'T12:00:00');
     const dayOfWeek = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][date.getDay()];
     const fixed = pacientesFixos
@@ -295,21 +299,35 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
         valor: p.valor_sessao
       }));
 
-    const combined = [...sporadic];
-    fixed.forEach(f => {
-      if (!combined.some(c => c.id === f.id)) {
-        combined.push(f);
+    // Scheduled sporadic patients for this specific date
+    const sporadicScheduled = pacientesEsporadicos
+      .filter(p => p.data_consulta === selectedChartDay)
+      .map(p => ({
+        id: p.id,
+        nome_completo: p.nome_completo,
+        tipo: 'esporadico',
+        horario: p.horario_consulta,
+        valor: p.valor_sessao
+      }));
+
+    const combined = [...realSessions];
+    
+    // Add scheduled patients if they don't already have a session record for this day
+    [...fixed, ...sporadicScheduled].forEach(p => {
+      if (!combined.some(c => c.id === p.id)) {
+        combined.push(p);
       }
     });
 
     return combined.sort((a, b) => (a.horario || "").localeCompare(b.horario || ""));
-  }, [sessoesMesSelecionado, selectedChartDay, pacientesFixos]);
+  }, [sessoesMesSelecionado, selectedChartDay, pacientesFixos, pacientesEsporadicos]);
 
   const scheduleForToday = useMemo(() => {
     const todayStr = new Date().toLocaleDateString('en-CA');
     const dayOfWeek = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][new Date().getDay()];
     
-    const sporadic = sessoesMesSelecionado
+    // Real sessions for today
+    const realSessions = sessoesMesSelecionado
       .filter(s => s.data_sessao === todayStr)
       .map(s => ({
         id: s.paciente_id,
@@ -318,6 +336,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
         horario: s.pacientes?.horario_consulta
       }));
 
+    // Fixed patients for today's weekday
     const fixed = pacientesFixos
       .filter(p => p.dia_fixo === dayOfWeek)
       .map(p => ({
@@ -327,15 +346,25 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
         horario: p.horario_consulta
       }));
 
-    const combined = [...sporadic];
-    fixed.forEach(f => {
-      if (!combined.some(c => c.id === f.id)) {
-        combined.push(f);
+    // Scheduled sporadic patients for today
+    const sporadicScheduled = pacientesEsporadicos
+      .filter(p => p.data_consulta === todayStr)
+      .map(p => ({
+        id: p.id,
+        nome_completo: p.nome_completo,
+        tipo: 'esporadico',
+        horario: p.horario_consulta
+      }));
+
+    const combined = [...realSessions];
+    [...fixed, ...sporadicScheduled].forEach(p => {
+      if (!combined.some(c => c.id === p.id)) {
+        combined.push(p);
       }
     });
 
     return combined.sort((a, b) => (a.horario || "").localeCompare(b.horario || ""));
-  }, [sessoesMesSelecionado, pacientesFixos]);
+  }, [sessoesMesSelecionado, pacientesFixos, pacientesEsporadicos]);
 
   if (!isLoggedIn) {
     return (
