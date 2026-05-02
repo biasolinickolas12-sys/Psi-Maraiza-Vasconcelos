@@ -311,8 +311,8 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
             )}
 
             <motion.div 
-              layout
-              className="bg-white/95 backdrop-blur-2xl rounded-[2.5rem] md:rounded-[4rem] p-6 mb-8 md:p-20 border-[6px] relative overflow-hidden group transition-all duration-700 neon-card-glow"
+              layout={!isMobile}
+              className={`bg-white/95 ${isMobile ? 'backdrop-blur-sm' : 'backdrop-blur-2xl'} rounded-[2.5rem] md:rounded-[4rem] p-6 mb-8 md:p-20 border-[6px] relative overflow-hidden group transition-all duration-700 neon-card-glow`}
               style={{
                 backgroundImage: "linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(254,250,246,1) 100%)",
               }}
@@ -399,9 +399,9 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
                 ) : (
                   <motion.div
                     key={step}
-                    initial={{ opacity: 0, x: 50, filter: "blur(10px)" }}
-                    animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, x: -50, filter: "blur(10px)" }}
+                    initial={{ opacity: 0, x: isMobile ? 20 : 50, filter: isMobile ? "none" : "blur(10px)" }}
+                    animate={{ opacity: 1, x: 0, filter: "none" }}
+                    exit={{ opacity: 0, x: isMobile ? -20 : -50, filter: isMobile ? "none" : "blur(10px)" }}
                     transition={{ duration: 0.6, ease: "circOut" }}
                     className="w-full"
                   >
