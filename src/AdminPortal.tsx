@@ -1008,12 +1008,30 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
             {/* Adicionar Pagamento */}
             <form onSubmit={handleSavePagamento} className="bg-slate-50 p-6 rounded-2xl mb-8 border border-slate-100">
               <h3 className="font-bold text-slate-800 mb-4 text-sm uppercase">Registrar Novo Pagamento</h3>
-              <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                <div className="flex-1">
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Data *</label>
-                  <input type="date" value={pagamentoData.data_sessao} onChange={e => setPagamentoData({...pagamentoData, data_sessao: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-2 outline-none focus:border-brand-orange" required />
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="col-span-2">
+                  <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">
+                    Data da Sessão (Referência no Gráfico) *
+                  </label>
+                  <div className="relative">
+                    <input 
+                      type="date" 
+                      value={pagamentoData.data_sessao} 
+                      onChange={e => setPagamentoData({...pagamentoData, data_sessao: e.target.value})} 
+                      className={`w-full border-2 border-slate-200 rounded-xl p-3 outline-none focus:border-brand-orange bg-white ${selectedChartDay ? 'border-brand-orange bg-orange-50/30' : ''}`} 
+                      required 
+                    />
+                    {selectedChartDay && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-black text-brand-orange bg-white px-2 py-1 rounded-lg border border-orange-100 uppercase">
+                        Vinculado ao Gráfico
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[9px] text-slate-400 mt-1 font-bold">
+                    * Este pagamento marcará como "PAGO" o dia selecionado acima.
+                  </p>
                 </div>
-                <div className="flex-1">
+                <div className="col-span-2">
                   <label className="block text-xs font-bold text-slate-700 mb-1">Valor *</label>
                   <input type="text" value={pagamentoData.valor} onChange={e => setPagamentoData({...pagamentoData, valor: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-2 outline-none focus:border-brand-orange" required />
                 </div>
