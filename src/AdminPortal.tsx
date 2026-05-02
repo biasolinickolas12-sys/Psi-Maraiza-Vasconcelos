@@ -10,6 +10,8 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [notasImportantes, setNotasImportantes] = useState("");
 
   const [activeTab, setActiveTab] = useState<'agenda' | 'financeiro'>('agenda');
 
@@ -61,6 +63,16 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
     setLoading(false);
   };
 
+  const loadNotas = async () => {
+    const { data } = await supabase.from('configuracoes').select('valor').eq('chave', 'notas_importantes').maybeSingle();
+    if (data) setNotasImportantes(data.valor || "");
+  };
+
+  const saveNotas = async (val: string) => {
+    setNotasImportantes(val);
+    await supabase.from('configuracoes').upsert({ chave: 'notas_importantes', valor: val });
+  };
+
   const loadTodasSessoes = async () => {
     const { data } = await supabase.from('pagamentos').select(`
       id, data_sessao, valor, pago, paciente_id, pacientes(nome_completo)
@@ -69,8 +81,11 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
   };
 
   useEffect(() => {
-    if (isLoggedIn && activeTab === 'financeiro') {
-      loadTodasSessoes();
+    if (isLoggedIn) {
+      if (activeTab === 'financeiro') {
+        loadTodasSessoes();
+        loadNotas();
+      }
     }
   }, [activeTab, isLoggedIn]);
 
@@ -173,8 +188,12 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
     }
   };
 
-  const pacientesFixos = pacientes.filter(p => p.dia_fixo);
-  const pacientesEsporadicos = pacientes.filter(p => !p.dia_fixo);
+  const filteredPacientes = pacientes.filter(p => 
+    p.nome_completo?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const pacientesFixos = filteredPacientes.filter(p => p.dia_fixo);
+  const pacientesEsporadicos = filteredPacientes.filter(p => !p.dia_fixo);
 
   // Faturamento Logic
   const sessoesMesSelecionado = useMemo(() => {
@@ -335,6 +354,31 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
         </div>
       </div>
 
+      {activeTab === 'agenda' && (
+        <div className="bg-white border-b border-slate-200 px-6 py-4">
+          <div className="max-w-7xl mx-auto relative">
+            <input 
+              type="text" 
+              placeholder="Pesquisar paciente por nome..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3 px-12 outline-none focus:border-brand-orange focus:bg-white transition-all font-medium"
+            />
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+              <Filter size={20} />
+            </div>
+            {searchTerm && (
+              <button 
+                onClick={() => setSearchTerm("")}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-7xl mx-auto">
           
@@ -371,8 +415,9 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
           {activeTab === 'financeiro' && (
             <div className="space-y-8">
               {/* Filtros e Total */}
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex-1 flex flex-col justify-center">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Total Section */}
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-center">
                   <span className="text-slate-500 font-bold uppercase text-xs mb-2 block">Faturamento Total do Mês</span>
                   <div className="text-4xl font-black text-emerald-600">
                     {faturamentoTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -380,7 +425,8 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                   <span className="text-slate-400 text-sm mt-2">Apenas sessões marcadas como "Pagas"</span>
                 </div>
                 
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex-1">
+                {/* Filters Section */}
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
                   <span className="text-slate-500 font-bold uppercase text-xs mb-4 block flex items-center gap-2">
                     <Filter size={14} /> Filtros de Período
                   </span>
@@ -402,6 +448,19 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                       </select>
                     </div>
                   </div>
+                </div>
+
+                {/* Important Notes Section */}
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col">
+                  <span className="text-slate-500 font-bold uppercase text-xs mb-3 block flex items-center gap-2">
+                    <Edit2 size={14} /> Anotações Importantes
+                  </span>
+                  <textarea 
+                    value={notasImportantes}
+                    onChange={(e) => saveNotas(e.target.value)}
+                    placeholder="Digite aqui anotações, lembretes ou metas para o mês..."
+                    className="w-full flex-1 bg-slate-50 rounded-2xl p-4 outline-none focus:bg-white border-2 border-transparent focus:border-brand-orange/20 transition-all text-slate-700 text-sm resize-none min-h-[100px]"
+                  />
                 </div>
               </div>
 
@@ -518,10 +577,6 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Horário</label>
                 <input type="time" value={formData.horario_consulta} onChange={e => setFormData({...formData, horario_consulta: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Valor da Sessão</label>
-                <input type="text" value={formData.valor_sessao} onChange={e => setFormData({...formData, valor_sessao: e.target.value})} placeholder="R$ 0,00" className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Fixo na Semana?</label>
