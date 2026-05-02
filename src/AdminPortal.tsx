@@ -243,6 +243,28 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
     setLoading(false);
   };
 
+    setLoading(false);
+  };
+
+  const handleClearAgendaMonth = async () => {
+    const mesNome = new Date(faturamentoAno, faturamentoMes - 1).toLocaleString('pt-BR', { month: 'long' });
+    if (!window.confirm(`ATENÇÃO: Você deseja apagar TODOS os dados de agenda de ${mesNome} de ${faturamentoAno}?\n\n- Datas de consultas dos pacientes esporádicos deste mês serão removidas.\n- Todos os registros financeiros (pagamentos) deste mês serão deletados.\n\nEsta ação é irreversível!`)) return;
+
+    setLoading(true);
+    const firstDay = `${faturamentoAno}-${String(faturamentoMes).padStart(2, '0')}-01`;
+    const lastDay = `${faturamentoAno}-${String(faturamentoMes).padStart(2, '0')}-${new Date(faturamentoAno, faturamentoMes, 0).getDate()}`;
+    
+    // 1. Clear sporadic dates
+    await supabase.from('pacientes').update({ data_consulta: null }).gte('data_consulta', firstDay).lte('data_consulta', lastDay);
+    // 2. Clear payments
+    await supabase.from('pagamentos').delete().gte('data_sessao', firstDay).lte('data_sessao', lastDay);
+
+    loadPacientes();
+    loadTodasSessoes();
+    alert("Dados do mês removidos com sucesso.");
+    setLoading(false);
+  };
+
   const handleDeleteMonthData = async () => {
     const mesNome = new Date(faturamentoAno, faturamentoMes - 1).toLocaleString('pt-BR', { month: 'long' });
     if (!window.confirm(`ATENÇÃO: Você está prestes a apagar TODOS os registros de sessões e pagamentos de ${mesNome} de ${faturamentoAno}.\n\nEsta ação é irreversível. Deseja continuar?`)) return;
@@ -573,25 +595,46 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
 
       {activeTab === 'agenda' && (
         <div className="bg-white border-b border-slate-200 px-6 py-4">
-          <div className="max-w-7xl mx-auto relative">
-            <input 
-              type="text" 
-              placeholder="Pesquisar paciente por nome..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3 px-12 outline-none focus:border-brand-orange focus:bg-white transition-all font-medium"
-            />
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-              <Filter size={20} />
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-4 items-center">
+            <div className="relative flex-1 w-full">
+              <input 
+                type="text" 
+                placeholder="Pesquisar paciente por nome..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3 px-12 outline-none focus:border-brand-orange focus:bg-white transition-all font-medium"
+              />
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                <Search size={20} />
+              </div>
+              {searchTerm && (
+                <button 
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X size={18} />
+                </button>
+              )}
             </div>
-            {searchTerm && (
+            
+            <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-100 w-full md:w-auto">
+              <select value={faturamentoMes} onChange={e => setFaturamentoMes(Number(e.target.value))} className="bg-transparent border-none text-xs font-bold text-slate-700 outline-none p-1">
+                {Array.from({length: 12}, (_, i) => i + 1).map(m => (
+                  <option key={m} value={m}>{new Date(2000, m - 1).toLocaleString('pt-BR', { month: 'short' }).toUpperCase()}</option>
+                ))}
+              </select>
+              <select value={faturamentoAno} onChange={e => setFaturamentoAno(Number(e.target.value))} className="bg-transparent border-none text-xs font-bold text-slate-700 outline-none p-1">
+                {[2024, 2025, 2026, 2027, 2028].map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
               <button 
-                onClick={() => setSearchTerm("")}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                onClick={handleClearAgendaMonth}
+                className="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl text-[10px] font-black transition-all uppercase tracking-widest whitespace-nowrap"
               >
-                <X size={18} />
+                Limpar Mês
               </button>
-            )}
+            </div>
           </div>
         </div>
       )}
