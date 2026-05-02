@@ -1221,15 +1221,10 @@ export default function App() {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.6, delay: 1.9 }}
-                    className="relative inline-block mx-2 px-3 py-1 transition-all duration-500 hover:scale-105"
+                    className="relative inline-block mx-1 transition-all duration-500 hover:scale-105"
                   >
-                    <motion.div
-                      initial={{ opacity: 0, scaleX: 0 }}
-                      animate={{ opacity: 1, scaleX: 1 }}
-                      transition={{ duration: 0.6, delay: 2.1, ease: "easeOut" }}
-                      className="absolute inset-0 bg-brand-yellow rounded-xl shadow-[0_0_30px_rgba(250,204,21,0.8)] -rotate-2 origin-left border border-brand-yellow/50"
-                    />
-                    <span className="relative z-10 italic font-black text-[#ff6600] drop-shadow-[0_0_15px_rgba(255,102,0,0.8)]">
+                    {/* Inner Glow Effect using Bright Text + Strong Outer Shadow */}
+                    <span className="relative z-10 italic font-black text-[#FFB067] drop-shadow-[0_0_20px_rgba(255,102,0,0.9)]">
                       <TypingText text="potência" />
                     </span>
                   </motion.span>
