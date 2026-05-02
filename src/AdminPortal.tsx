@@ -873,7 +873,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
 
             {/* Adicionar Pagamento */}
             <form onSubmit={handleSavePagamento} className="bg-slate-50 p-6 rounded-2xl mb-8 border border-slate-100">
-              <h3 className="font-bold text-slate-800 mb-4 text-sm uppercase">Registrar Nova Sessão/Pagamento</h3>
+              <h3 className="font-bold text-slate-800 mb-4 text-sm uppercase">Registrar Novo Pagamento</h3>
               <div className="flex flex-col sm:flex-row gap-4 mb-4">
                 <div className="flex-1">
                   <label className="block text-xs font-bold text-slate-700 mb-1">Data *</label>
@@ -890,7 +890,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                   <span className="font-bold text-slate-700">Já foi pago?</span>
                 </label>
                 <button type="submit" disabled={loading} className="ml-auto bg-slate-900 text-white px-6 py-2 rounded-xl font-bold hover:bg-slate-800 transition-colors disabled:opacity-50">
-                  Adicionar
+                  Registrar
                 </button>
               </div>
             </form>
