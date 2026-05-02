@@ -272,6 +272,19 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
     return sessoesMesSelecionado.filter(s => s.data_sessao === selectedChartDay);
   }, [sessoesMesSelecionado, selectedChartDay]);
 
+  if (loading && pacientes.length === 0) {
+    return (
+      <div className="fixed inset-0 bg-slate-50 z-[200] flex items-center justify-center">
+        <motion.div 
+          animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 360] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <Flower2 size={48} className="text-brand-orange opacity-50" />
+        </motion.div>
+      </div>
+    );
+  }
+
   if (!isLoggedIn) {
     return (
       <div className="fixed inset-0 bg-slate-900/90 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">

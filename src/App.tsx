@@ -628,10 +628,24 @@ const FAQSection = ({ isMobile }: { isMobile: boolean }) => {
 
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isAdminPortalOpen, setIsAdminPortalOpen] = useState(() => localStorage.getItem('isAdminPortalOpen') === 'true');
+  const [isAdminPortalOpen, setIsAdminPortalOpen] = useState(() => {
+    try {
+      return localStorage.getItem('isAdminPortalOpen') === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     localStorage.setItem('isAdminPortalOpen', isAdminPortalOpen.toString());
+    if (isAdminPortalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
   }, [isAdminPortalOpen]);
   const [isStoryOpen, setIsStoryOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -1015,7 +1029,13 @@ export default function App() {
       </AnimatePresence>
 
       {/* Main Content Wrapper */}
-      <main className="transition-all duration-300">
+      <AnimatePresence>
+        {isAdminPortalOpen && (
+          <AdminPortal key="admin-portal" onClose={() => setIsAdminPortalOpen(false)} />
+        )}
+      </AnimatePresence>
+
+      <main className={`transition-all duration-300 ${isAdminPortalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
 
       {/* Hero Section - Full Screen and Aligned for Maximum Visibility */}
       <section id="inicio" className="relative min-h-screen flex flex-col items-center justify-center pt-24 md:pt-12 overflow-hidden bg-[#FAF9F6]">
@@ -2153,7 +2173,6 @@ export default function App() {
         </div>
       </footer>
     </main>
-    {isAdminPortalOpen && <AdminPortal onClose={() => setIsAdminPortalOpen(false)} />}
   </div>
 );
 }
