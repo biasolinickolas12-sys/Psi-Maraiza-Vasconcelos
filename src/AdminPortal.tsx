@@ -297,7 +297,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
       
       data.push({ 
         date: dateStr, 
-        consultas: Math.max(realCount, expectedTotal)
+        consultas: expectedTotal
       });
     }
     
@@ -751,7 +751,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                         interval={0}
                         tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }}
                       />
-                      <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} />
+                      <YAxis domain={[0, 20]} ticks={[0, 5, 10, 15, 20]} axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} />
                       <RechartsTooltip 
                         labelFormatter={(label) => new Date(label + 'T12:00:00').toLocaleDateString('pt-BR')}
                         cursor={{ fill: '#f8fafc', radius: 4 }}
