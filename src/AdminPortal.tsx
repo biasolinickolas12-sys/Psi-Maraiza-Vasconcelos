@@ -84,7 +84,8 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
 
   const loadTodasSessoes = async () => {
     const { data } = await supabase.from('pagamentos').select(`
-      id, data_sessao, valor, pago, paciente_id, pacientes(nome_completo, horario_consulta)
+      id, data_sessao, valor, pago, paciente_id, 
+      pacientes(nome_completo, horario_consulta, idade, telefone, relato_proxima_triagem, pauta_proxima_semana)
     `);
     if (data) setTodasSessoes(data);
   };
@@ -338,7 +339,11 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
         tipo: 'esporadico',
         valor: s.valor,
         pago: s.pago,
-        horario: s.pacientes?.horario_consulta
+        horario: s.pacientes?.horario_consulta,
+        idade: s.pacientes?.idade,
+        telefone: s.pacientes?.telefone,
+        relato: s.pacientes?.relato_proxima_triagem,
+        pauta: s.pacientes?.pauta_proxima_semana
       }));
 
     // Fixed patients for that day of week
@@ -351,7 +356,12 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
         nome_completo: p.nome_completo,
         tipo: 'fixo',
         horario: p.horario_consulta,
-        valor: p.valor_sessao
+        valor: p.valor_sessao,
+        idade: p.idade,
+        telefone: p.telefone,
+        relato: p.relato_proxima_triagem,
+        pauta: p.pauta_proxima_semana,
+        pago: false // Projections are pending by default
       }));
 
     // Scheduled sporadic patients for this specific date
@@ -362,7 +372,12 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
         nome_completo: p.nome_completo,
         tipo: 'esporadico',
         horario: p.horario_consulta,
-        valor: p.valor_sessao
+        valor: p.valor_sessao,
+        idade: p.idade,
+        telefone: p.telefone,
+        relato: p.relato_proxima_triagem,
+        pauta: p.pauta_proxima_semana,
+        pago: false // Projections are pending by default
       }));
 
     const combined = [...realSessions];
@@ -807,21 +822,34 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                   </div>
                   <div className="space-y-3">
                     {pacientesDoDia.map(s => (
-                      <div key={s.sessionId || `${s.id}-${s.tipo}`} className="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
-                        <div>
-                          <div className="font-bold text-slate-800">{s.nome_completo}</div>
-                          <div className="text-[10px] uppercase font-bold tracking-widest text-slate-400">
-                            {s.horario} • {s.tipo} {s.valor ? `• R$ ${s.valor}` : ''}
+                      <div key={s.sessionId || `${s.id}-${s.tipo}`} className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 flex flex-col gap-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="font-black text-xl text-slate-900 leading-tight">{s.nome_completo}</div>
+                            <div className="text-slate-500 text-xs font-bold mt-1">
+                              {s.idade} {s.idade ? 'anos •' : ''} {s.telefone}
+                            </div>
+                            <div className="text-[10px] uppercase font-bold tracking-widest text-brand-orange mt-2 bg-brand-orange/5 px-2 py-0.5 rounded-full inline-block">
+                              {s.horario} • {s.tipo} {s.valor ? `• R$ ${s.valor}` : ''}
+                            </div>
+                          </div>
+                          <div>
+                            {s.pago 
+                              ? <span className="bg-emerald-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black shadow-sm">PAGO</span>
+                              : <span className="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-[10px] font-black border border-amber-200">PENDENTE</span>
+                            }
                           </div>
                         </div>
-                        <div>
-                          {s.tipo === 'esporadico' ? (
-                            s.pago 
-                              ? <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-bold">PAGO</span>
-                              : <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-bold">PENDENTE</span>
-                          ) : (
-                            <span className="bg-slate-200 text-slate-600 px-3 py-1 rounded-full text-[10px] font-bold">FIXO</span>
-                          )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-white/80 p-4 rounded-2xl border border-slate-100">
+                            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Relato Próxima Triagem</span>
+                            <p className="text-xs text-slate-600 italic leading-relaxed">{s.relato || 'Nenhum relato preenchido.'}</p>
+                          </div>
+                          <div className="bg-white/80 p-4 rounded-2xl border border-slate-100">
+                            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Pauta Próxima Semana</span>
+                            <p className="text-xs text-slate-600 italic leading-relaxed">{s.pauta || 'Nenhuma pauta preenchida.'}</p>
+                          </div>
                         </div>
                       </div>
                     ))}
