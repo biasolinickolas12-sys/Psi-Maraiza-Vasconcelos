@@ -664,7 +664,13 @@ const AdminPortal = ({ onClose }: { onClose: () => void }) => {
   const handleSavePaciente = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.from('pacientes').insert([formData]);
+
+    const payload: any = { ...formData };
+    if (!payload.data_consulta) {
+      payload.data_consulta = null;
+    }
+
+    const { error } = await supabase.from('pacientes').insert([payload]);
     if (!error) {
       setIsModalOpen(false);
       setFormData({
