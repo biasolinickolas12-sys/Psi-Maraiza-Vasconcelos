@@ -555,7 +555,7 @@ const FAQSection = ({ isMobile }: { isMobile: boolean }) => {
         </div>
 
         <div className="max-w-4xl mx-auto space-y-4 md:space-y-8">
-          {faqs.slice(0, isMobile ? 3 : faqs.length).map((faq, idx) => (
+          {faqs.slice(0, isMobile ? 4 : faqs.length).map((faq, idx) => (
             <motion.div
               key={idx}
               initial={{ opacity: 0, x: idx % 2 === 0 ? -30 : 30 }}
