@@ -1221,10 +1221,13 @@ export default function App() {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.6, delay: 1.9 }}
-                    className="relative inline-block mx-1 transition-all duration-500 hover:scale-105"
+                    className="relative inline-block mx-2 px-5 py-1 md:py-2 transition-all duration-500 hover:scale-105 align-middle -translate-y-1"
                   >
-                    {/* Inner Glow Effect using Bright Text + Strong Outer Shadow */}
-                    <span className="relative z-10 italic font-black text-[#FFB067] drop-shadow-[0_0_20px_rgba(255,102,0,0.9)]">
+                    {/* Exact Card Background as Quote */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-brand-orange via-brand-yellow to-brand-orange-light rounded-[1rem] md:rounded-[1.5rem] shadow-[0_15px_30px_rgba(255,107,53,0.25)] border-[3px] md:border-[5px] border-white overflow-hidden -z-10">
+                        <div className="absolute inset-0 bg-white/10 backdrop-blur-[2px]"></div>
+                    </div>
+                    <span className="relative z-10 italic font-black text-slate-950 drop-shadow-sm">
                       <TypingText text="potência" />
                     </span>
                   </motion.span>
