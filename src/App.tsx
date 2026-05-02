@@ -40,6 +40,7 @@ import {
   Filter
 } from "lucide-react";
 import React, { useState, useEffect, useMemo } from "react";
+import { AdminPortal } from "./AdminPortal";
 import { supabase } from "./supabase";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 

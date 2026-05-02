@@ -3,7 +3,7 @@ import {
   X, Plus, Flower2, Edit2, DollarSign, CalendarDays, LineChart as LineChartIcon, Filter
 } from "lucide-react";
 import { supabase } from "./supabase";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 
 export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -412,7 +412,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                       />
                       <Bar dataKey="consultas" fill="#ff6600" radius={[4, 4, 0, 0]} cursor="pointer">
                         {chartData.map((entry, index) => (
-                          <cell key={`cell-${index}`} fill={entry.date === selectedChartDay ? '#cc5200' : '#ff6600'} />
+                          <Cell key={`cell-${index}`} fill={entry.date === selectedChartDay ? '#cc5200' : '#ff6600'} />
                         ))}
                       </Bar>
                     </BarChart>
