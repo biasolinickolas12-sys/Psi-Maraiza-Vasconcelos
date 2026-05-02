@@ -224,7 +224,7 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
 
         {/* Floating Geometric Elements */}
         <motion.div
-          animate={{ 
+          animate={isMobile ? {} : { 
             rotate: 360,
             y: [0, -40, 0],
             x: [0, 20, 0]
@@ -233,7 +233,7 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
           className="absolute top-[15%] left-[10%] w-16 h-16 border-2 border-brand-orange/20 rounded-2xl opacity-40"
         />
         <motion.div
-          animate={{ 
+          animate={isMobile ? {} : { 
             rotate: -360,
             x: [0, 40, 0],
             y: [0, 30, 0]
@@ -242,7 +242,7 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
           className="absolute bottom-[20%] right-[10%] w-24 h-24 border-4 border-brand-yellow/30 rounded-full opacity-30"
         />
         <motion.div
-          animate={{ 
+          animate={isMobile ? {} : { 
             scale: [1, 1.3, 1],
             opacity: [0.1, 0.4, 0.1],
             rotate: [0, 45, 0]
@@ -256,7 +256,7 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
              style={{ backgroundImage: 'radial-gradient(circle, #f97316 2px, transparent 0)', backgroundSize: '16px 16px' }} />
         
         <motion.div 
-          animate={{ y: [0, 20, 0] }}
+          animate={isMobile ? {} : { y: [0, 20, 0] }}
           transition={{ duration: 8, repeat: Infinity }}
           className="absolute bottom-[10%] left-[20%] w-48 h-48 border-2 border-dashed border-brand-yellow/20 rounded-full opacity-30" 
         />
