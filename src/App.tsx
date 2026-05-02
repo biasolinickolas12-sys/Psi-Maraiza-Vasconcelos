@@ -321,7 +321,7 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
 
             <motion.div 
               layout={!isMobile}
-              className={`bg-white/95 ${isMobile ? 'backdrop-blur-sm' : 'backdrop-blur-2xl'} rounded-[2.5rem] md:rounded-[4rem] p-6 mb-8 md:p-20 border-[6px] relative overflow-hidden group transition-all duration-700 ${!isMobile ? 'neon-card-glow' : 'border-brand-orange/20 shadow-xl'}`}
+              className={`bg-white/95 ${isMobile ? 'backdrop-blur-sm' : 'backdrop-blur-2xl'} rounded-[2.5rem] md:rounded-[4rem] p-6 mb-8 md:p-20 border-[6px] relative overflow-hidden group transition-all duration-700 ${!isMobile ? 'neon-card-glow' : 'border-brand-orange border-b-brand-yellow border-r-brand-yellow shadow-xl shadow-brand-orange/10'}`}
               style={{
                 backgroundImage: "linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(254,250,246,1) 100%)",
               }}
