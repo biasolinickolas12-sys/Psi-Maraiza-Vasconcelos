@@ -441,7 +441,7 @@ const TriageSection = () => {
   );
 };
 
-const FAQSection = () => {
+const FAQSection = ({ isMobile }: { isMobile: boolean }) => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const faqs = [
@@ -470,27 +470,31 @@ const FAQSection = () => {
         <div className="absolute inset-0 bg-slate-50/50 -z-10" />
         
         {/* Intense Animated Background Blobs */}
-        <motion.div
-          animate={{
-            scale: [1, 1.4, 1],
-            rotate: [0, 180, 0],
-            x: [0, 150, 0],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-          className="absolute top-0 -right-40 w-[800px] h-[800px] bg-gradient-to-br from-brand-orange to-red-500 blur-[150px] rounded-full opacity-20 mix-blend-multiply"
-        />
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, -120, 0],
-            x: [0, -100, 0],
-          }}
-          transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-          className="absolute -bottom-60 -left-20 w-[900px] h-[900px] bg-gradient-to-tr from-brand-yellow via-orange-400 to-transparent blur-[160px] rounded-full opacity-25 mix-blend-multiply"
-        />
+        {!isMobile && (
+          <>
+            <motion.div
+              animate={{
+                scale: [1, 1.4, 1],
+                rotate: [0, 180, 0],
+                x: [0, 150, 0],
+              }}
+              transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+              className="absolute top-0 -right-40 w-[800px] h-[800px] bg-gradient-to-br from-brand-orange to-red-500 blur-[150px] rounded-full opacity-20 mix-blend-multiply"
+            />
+            <motion.div
+              animate={{
+                scale: [1, 1.2, 1],
+                rotate: [0, -120, 0],
+                x: [0, -100, 0],
+              }}
+              transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+              className="absolute -bottom-60 -left-20 w-[900px] h-[900px] bg-gradient-to-tr from-brand-yellow via-orange-400 to-transparent blur-[160px] rounded-full opacity-25 mix-blend-multiply"
+            />
+          </>
+        )}
 
         {/* Geographic Floating Elements */}
-        {[...Array(6)].map((_, i) => (
+        {!isMobile && [...Array(6)].map((_, i) => (
           <motion.div
             key={`geo-${i}`}
             animate={{
@@ -555,7 +559,7 @@ const FAQSection = () => {
         </div>
 
         <div className="max-w-4xl mx-auto space-y-4 md:space-y-8">
-          {faqs.map((faq, idx) => (
+          {faqs.slice(0, isMobile ? 3 : faqs.length).map((faq, idx) => (
             <motion.div
               key={idx}
               initial={{ opacity: 0, x: idx % 2 === 0 ? -30 : 30 }}
@@ -1909,7 +1913,7 @@ export default function App() {
         </div>
       </section>
 
-      <FAQSection />
+      <FAQSection isMobile={isMobile} />
 
       {/* Exit Intent Popup */}
       <AnimatePresence>
