@@ -1,0 +1,593 @@
+import React, { useState, useEffect, useMemo } from "react";
+import { 
+  X, Plus, Flower2, Edit2, DollarSign, CalendarDays, LineChart as LineChartIcon, Filter
+} from "lucide-react";
+import { supabase } from "./supabase";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
+
+export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const [activeTab, setActiveTab] = useState<'agenda' | 'financeiro'>('agenda');
+
+  const [pacientes, setPacientes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPaciente, setEditingPaciente] = useState<any>(null);
+
+  const [formData, setFormData] = useState({
+    nome_completo: "",
+    idade: "",
+    telefone: "",
+    relato_proxima_triagem: "",
+    pauta_proxima_semana: "",
+    data_consulta: "",
+    horario_consulta: "",
+    valor_sessao: "",
+    dia_fixo: ""
+  });
+
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedPacienteForPayment, setSelectedPacienteForPayment] = useState<any>(null);
+  const [pagamentos, setPagamentos] = useState<any[]>([]);
+  const [pagamentoData, setPagamentoData] = useState({ data_sessao: "", valor: "", pago: false });
+
+  const [faturamentoMes, setFaturamentoMes] = useState(new Date().getMonth() + 1);
+  const [faturamentoAno, setFaturamentoAno] = useState(new Date().getFullYear());
+  const [todasSessoes, setTodasSessoes] = useState<any[]>([]);
+  const [selectedChartDay, setSelectedChartDay] = useState<string | null>(null);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email === "maraizapsic@gmail.com" && password === "iniciaratendimento135.") {
+      setIsLoggedIn(true);
+      setError("");
+      loadPacientes();
+    } else {
+      setError("Credenciais inválidas");
+    }
+  };
+
+  const loadPacientes = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.from('pacientes').select('*').order('created_at', { ascending: false });
+    if (!error && data) {
+      setPacientes(data);
+    }
+    setLoading(false);
+  };
+
+  const loadTodasSessoes = async () => {
+    const { data } = await supabase.from('pagamentos').select(`
+      id, data_sessao, valor, pago, paciente_id, pacientes(nome_completo)
+    `);
+    if (data) setTodasSessoes(data);
+  };
+
+  useEffect(() => {
+    if (isLoggedIn && activeTab === 'financeiro') {
+      loadTodasSessoes();
+    }
+  }, [activeTab, isLoggedIn]);
+
+  const handleNewPacienteClick = () => {
+    setEditingPaciente(null);
+    setFormData({
+      nome_completo: "", idade: "", telefone: "", relato_proxima_triagem: "", pauta_proxima_semana: "",
+      data_consulta: "", horario_consulta: "", valor_sessao: "", dia_fixo: ""
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleEditClick = (p: any) => {
+    setEditingPaciente(p);
+    setFormData({
+      nome_completo: p.nome_completo || "",
+      idade: p.idade || "",
+      telefone: p.telefone || "",
+      relato_proxima_triagem: p.relato_proxima_triagem || "",
+      pauta_proxima_semana: p.pauta_proxima_semana || "",
+      data_consulta: p.data_consulta || "",
+      horario_consulta: p.horario_consulta || "",
+      valor_sessao: p.valor_sessao || "",
+      dia_fixo: p.dia_fixo || ""
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSavePaciente = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const payload: any = { ...formData };
+    if (!payload.data_consulta) payload.data_consulta = null;
+
+    if (editingPaciente) {
+      const { error } = await supabase.from('pacientes').update(payload).eq('id', editingPaciente.id);
+      if (!error) {
+        setIsModalOpen(false);
+        loadPacientes();
+      } else {
+        console.error(error);
+        alert("Erro ao editar paciente");
+      }
+    } else {
+      const { error } = await supabase.from('pacientes').insert([payload]);
+      if (!error) {
+        setIsModalOpen(false);
+        loadPacientes();
+      } else {
+        console.error(error);
+        alert("Erro ao salvar paciente");
+      }
+    }
+    setLoading(false);
+  };
+
+  const openFinanceiro = async (p: any) => {
+    setSelectedPacienteForPayment(p);
+    setPagamentoData({ data_sessao: "", valor: p.valor_sessao || "", pago: false });
+    setIsPaymentModalOpen(true);
+    loadPagamentos(p.id);
+  };
+
+  const loadPagamentos = async (pacienteId: string) => {
+    const { data } = await supabase.from('pagamentos').select('*').eq('paciente_id', pacienteId).order('data_sessao', { ascending: false });
+    if (data) setPagamentos(data);
+  };
+
+  const handleSavePagamento = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPacienteForPayment) return;
+    setLoading(true);
+    
+    // Convert comma to dot for parsing
+    const valorNum = parseFloat(pagamentoData.valor.replace(',', '.') || '0');
+    
+    const { error } = await supabase.from('pagamentos').insert([{
+      paciente_id: selectedPacienteForPayment.id,
+      data_sessao: pagamentoData.data_sessao,
+      valor: valorNum,
+      pago: pagamentoData.pago
+    }]);
+
+    if (!error) {
+      setPagamentoData({ data_sessao: "", valor: selectedPacienteForPayment.valor_sessao || "", pago: false });
+      loadPagamentos(selectedPacienteForPayment.id);
+      if (activeTab === 'financeiro') loadTodasSessoes();
+    } else {
+      alert("Erro ao adicionar pagamento");
+    }
+    setLoading(false);
+  };
+
+  const togglePago = async (pag: any) => {
+    const { error } = await supabase.from('pagamentos').update({ pago: !pag.pago }).eq('id', pag.id);
+    if (!error) {
+      loadPagamentos(pag.paciente_id);
+      if (activeTab === 'financeiro') loadTodasSessoes();
+    }
+  };
+
+  const pacientesFixos = pacientes.filter(p => p.dia_fixo);
+  const pacientesEsporadicos = pacientes.filter(p => !p.dia_fixo);
+
+  // Faturamento Logic
+  const sessoesMesSelecionado = useMemo(() => {
+    return todasSessoes.filter(s => {
+      if (!s.data_sessao) return false;
+      const date = new Date(s.data_sessao);
+      // We must add timezone offset to avoid previous day issue
+      const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+      const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+      return adjustedDate.getMonth() + 1 === faturamentoMes && adjustedDate.getFullYear() === faturamentoAno;
+    });
+  }, [todasSessoes, faturamentoMes, faturamentoAno]);
+
+  const faturamentoTotal = useMemo(() => {
+    return sessoesMesSelecionado
+      .filter(s => s.pago)
+      .reduce((sum, s) => sum + Number(s.valor || 0), 0);
+  }, [sessoesMesSelecionado]);
+
+  const chartData = useMemo(() => {
+    const daysMap = new Map<string, number>();
+    sessoesMesSelecionado.forEach(s => {
+      const dateStr = s.data_sessao; // YYYY-MM-DD
+      daysMap.set(dateStr, (daysMap.get(dateStr) || 0) + 1);
+    });
+    return Array.from(daysMap.entries())
+      .map(([date, count]) => ({ date, consultas: count }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }, [sessoesMesSelecionado]);
+
+  const pacientesDoDia = useMemo(() => {
+    if (!selectedChartDay) return [];
+    return sessoesMesSelecionado.filter(s => s.data_sessao === selectedChartDay);
+  }, [sessoesMesSelecionado, selectedChartDay]);
+
+  if (!isLoggedIn) {
+    return (
+      <div className="fixed inset-0 bg-slate-900/90 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-black text-slate-900">Acesso Restrito</h2>
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
+              <X size={24} />
+            </button>
+          </div>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">E-mail</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" required />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Senha</label>
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" required />
+            </div>
+            {error && <p className="text-red-500 text-sm font-bold">{error}</p>}
+            <button type="submit" className="w-full bg-brand-orange text-white font-black py-4 rounded-xl shadow-lg hover:bg-orange-600 transition-colors">
+              Entrar
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  const renderPatientCard = (p: any) => (
+    <div key={p.id} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col gap-4 relative overflow-hidden group">
+      <div className="absolute top-0 right-0 w-24 h-24 bg-brand-orange/5 rounded-bl-full -z-10 group-hover:scale-110 transition-transform" />
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="font-black text-xl text-slate-900">{p.nome_completo}</h3>
+          <p className="text-slate-500 text-sm">{p.idade} {p.idade ? 'anos •' : ''} {p.telefone}</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => openFinanceiro(p)} className="p-2 bg-slate-50 hover:bg-emerald-50 text-slate-600 hover:text-emerald-600 rounded-full transition-colors" title="Financeiro">
+            <DollarSign size={18} />
+          </button>
+          <button onClick={() => handleEditClick(p)} className="p-2 bg-slate-50 hover:bg-brand-orange/10 text-slate-600 hover:text-brand-orange rounded-full transition-colors" title="Editar">
+            <Edit2 size={18} />
+          </button>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="bg-slate-50 p-2 rounded-xl">
+          <span className="text-slate-400 block text-xs font-bold uppercase">Data</span>
+          <span className="font-medium text-slate-700">{p.data_consulta ? new Date(p.data_consulta + 'T12:00:00').toLocaleDateString('pt-BR') : '-'}</span>
+        </div>
+        <div className="bg-slate-50 p-2 rounded-xl">
+          <span className="text-slate-400 block text-xs font-bold uppercase">Horário</span>
+          <span className="font-medium text-slate-700">{p.horario_consulta || '-'}</span>
+        </div>
+        <div className="bg-slate-50 p-2 rounded-xl">
+          <span className="text-slate-400 block text-xs font-bold uppercase">Valor</span>
+          <span className="font-medium text-brand-orange">{p.valor_sessao || '-'}</span>
+        </div>
+        <div className="bg-slate-50 p-2 rounded-xl">
+          <span className="text-slate-400 block text-xs font-bold uppercase">Dia Fixo</span>
+          <span className="font-medium text-slate-700">{p.dia_fixo || '-'}</span>
+        </div>
+      </div>
+      <div className="text-sm border-t border-slate-100 pt-3">
+        <span className="text-slate-400 block text-xs font-bold uppercase mb-1">Pauta da Próxima Semana</span>
+        <p className="text-slate-700 line-clamp-2">{p.pauta_proxima_semana || '-'}</p>
+      </div>
+      <div className="text-sm border-t border-slate-100 pt-3">
+        <span className="text-slate-400 block text-xs font-bold uppercase mb-1">Relato Próx. Triagem</span>
+        <p className="text-slate-700 line-clamp-2">{p.relato_proxima_triagem || '-'}</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 bg-slate-100 z-[100] flex flex-col h-screen overflow-hidden">
+      <div className="bg-white border-b border-slate-200 p-4 flex flex-col sm:flex-row justify-between items-center shrink-0 shadow-sm z-10 gap-4">
+        <h1 className="text-2xl font-black text-slate-900 flex items-center gap-2">
+          <Flower2 className="text-brand-orange" />
+          Portal Administrativo
+        </h1>
+        
+        <div className="flex bg-slate-100 p-1 rounded-full">
+          <button 
+            onClick={() => setActiveTab('agenda')}
+            className={`px-6 py-2 rounded-full font-bold transition-all ${activeTab === 'agenda' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            <CalendarDays size={18} className="inline mr-2" />
+            Agenda
+          </button>
+          <button 
+            onClick={() => { setActiveTab('financeiro'); setSelectedChartDay(null); }}
+            className={`px-6 py-2 rounded-full font-bold transition-all ${activeTab === 'financeiro' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            <LineChartIcon size={18} className="inline mr-2" />
+            Financeiro
+          </button>
+        </div>
+
+        <div className="flex items-center gap-4">
+          {activeTab === 'agenda' && (
+            <button onClick={handleNewPacienteClick} className="bg-slate-900 text-white px-6 py-2 rounded-full font-bold flex items-center gap-2 hover:bg-slate-800 shadow-md">
+              <Plus size={20} />
+              Novo
+            </button>
+          )}
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 bg-slate-100 rounded-full text-slate-500">
+            <X size={24} />
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-auto p-6">
+        <div className="max-w-7xl mx-auto">
+          
+          {activeTab === 'agenda' && (
+            <div className="space-y-12">
+              <section>
+                <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-brand-orange block"></span>
+                  Pacientes Fixos
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {pacientesFixos.map(renderPatientCard)}
+                  {pacientesFixos.length === 0 && (
+                    <p className="text-slate-400 col-span-full">Nenhum paciente fixo cadastrado.</p>
+                  )}
+                </div>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-slate-400 block"></span>
+                  Pacientes Esporádicos
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {pacientesEsporadicos.map(renderPatientCard)}
+                  {pacientesEsporadicos.length === 0 && (
+                    <p className="text-slate-400 col-span-full">Nenhum paciente esporádico cadastrado.</p>
+                  )}
+                </div>
+              </section>
+            </div>
+          )}
+
+          {activeTab === 'financeiro' && (
+            <div className="space-y-8">
+              {/* Filtros e Total */}
+              <div className="flex flex-col md:flex-row gap-6">
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex-1 flex flex-col justify-center">
+                  <span className="text-slate-500 font-bold uppercase text-xs mb-2 block">Faturamento Total do Mês</span>
+                  <div className="text-4xl font-black text-emerald-600">
+                    {faturamentoTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </div>
+                  <span className="text-slate-400 text-sm mt-2">Apenas sessões marcadas como "Pagas"</span>
+                </div>
+                
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex-1">
+                  <span className="text-slate-500 font-bold uppercase text-xs mb-4 block flex items-center gap-2">
+                    <Filter size={14} /> Filtros de Período
+                  </span>
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Mês</label>
+                      <select value={faturamentoMes} onChange={e => setFaturamentoMes(Number(e.target.value))} className="w-full border-2 border-slate-200 rounded-xl p-3 outline-none bg-slate-50">
+                        {Array.from({length: 12}, (_, i) => i + 1).map(m => (
+                          <option key={m} value={m}>{new Date(2000, m - 1).toLocaleString('pt-BR', { month: 'long' })}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Ano</label>
+                      <select value={faturamentoAno} onChange={e => setFaturamentoAno(Number(e.target.value))} className="w-full border-2 border-slate-200 rounded-xl p-3 outline-none bg-slate-50">
+                        {[2024, 2025, 2026, 2027, 2028].map(y => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gráfico */}
+              <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                <span className="text-slate-500 font-bold uppercase text-xs mb-6 block">Consultas por Dia (Clique para filtrar)</span>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} onClick={(data) => {
+                      if (data && data.activeLabel) {
+                        setSelectedChartDay(data.activeLabel === selectedChartDay ? null : data.activeLabel);
+                      }
+                    }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                      <XAxis dataKey="date" tickFormatter={(val) => new Date(val + 'T12:00:00').getDate().toString()} axisLine={false} tickLine={false} />
+                      <YAxis allowDecimals={false} axisLine={false} tickLine={false} />
+                      <RechartsTooltip 
+                        labelFormatter={(label) => new Date(label + 'T12:00:00').toLocaleDateString('pt-BR')}
+                        cursor={{fill: '#f1f5f9'}}
+                      />
+                      <Bar dataKey="consultas" fill="#ff6600" radius={[4, 4, 0, 0]} cursor="pointer">
+                        {chartData.map((entry, index) => (
+                          <cell key={`cell-${index}`} fill={entry.date === selectedChartDay ? '#cc5200' : '#ff6600'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Pacientes do Dia Selecionado */}
+              {selectedChartDay && (
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 border-l-4 border-l-brand-orange">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-slate-800 font-bold text-lg">
+                      Sessões do dia {new Date(selectedChartDay + 'T12:00:00').toLocaleDateString('pt-BR')}
+                    </span>
+                    <button onClick={() => setSelectedChartDay(null)} className="text-sm text-slate-500 hover:text-slate-800 font-medium">Limpar filtro</button>
+                  </div>
+                  <div className="space-y-3">
+                    {pacientesDoDia.map(s => (
+                      <div key={s.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
+                        <div>
+                          <div className="font-bold text-slate-800">{s.pacientes?.nome_completo || 'Paciente Removido'}</div>
+                          <div className="text-xs text-slate-500">Valor: R$ {s.valor}</div>
+                        </div>
+                        <div>
+                          {s.pago 
+                            ? <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold">Pago</span>
+                            : <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold">Pendente</span>
+                          }
+                        </div>
+                      </div>
+                    ))}
+                    {pacientesDoDia.length === 0 && <p className="text-sm text-slate-500">Nenhuma sessão encontrada para este dia.</p>}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {/* Modal de Adicionar/Editar Paciente */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-3xl p-8 max-w-2xl w-full my-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-black text-slate-900">{editingPaciente ? 'Editar Paciente' : 'Novo Paciente'}</h2>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
+                <X size={24} />
+              </button>
+            </div>
+            <form onSubmit={handleSavePaciente} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-bold text-slate-700 mb-1">Nome Completo *</label>
+                <input type="text" value={formData.nome_completo} onChange={e => setFormData({...formData, nome_completo: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" required />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Idade</label>
+                <input type="text" value={formData.idade} onChange={e => setFormData({...formData, idade: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Telefone</label>
+                <input type="text" value={formData.telefone} onChange={e => setFormData({...formData, telefone: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-bold text-slate-700 mb-1">Descrição de relato para a próxima triagem</label>
+                <textarea value={formData.relato_proxima_triagem} onChange={e => setFormData({...formData, relato_proxima_triagem: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none h-24 resize-none" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-bold text-slate-700 mb-1">Descrição de pauta para a próxima semana</label>
+                <textarea value={formData.pauta_proxima_semana} onChange={e => setFormData({...formData, pauta_proxima_semana: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none h-24 resize-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Data da Consulta</label>
+                <input type="date" value={formData.data_consulta} onChange={e => setFormData({...formData, data_consulta: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Horário</label>
+                <input type="time" value={formData.horario_consulta} onChange={e => setFormData({...formData, horario_consulta: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Valor da Sessão</label>
+                <input type="text" value={formData.valor_sessao} onChange={e => setFormData({...formData, valor_sessao: e.target.value})} placeholder="R$ 0,00" className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Fixo na Semana?</label>
+                <select value={formData.dia_fixo} onChange={e => setFormData({...formData, dia_fixo: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none bg-white">
+                  <option value="">Não Fixo</option>
+                  <option value="Segunda">Segunda-feira</option>
+                  <option value="Terça">Terça-feira</option>
+                  <option value="Quarta">Quarta-feira</option>
+                  <option value="Quinta">Quinta-feira</option>
+                  <option value="Sexta">Sexta-feira</option>
+                  <option value="Sábado">Sábado</option>
+                </select>
+              </div>
+              <div className="md:col-span-2 pt-4 flex gap-4">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 border-2 border-slate-200 text-slate-700 font-black py-4 rounded-xl hover:bg-slate-50 transition-colors">
+                  Cancelar
+                </button>
+                <button type="submit" disabled={loading} className="flex-1 bg-brand-orange text-white font-black py-4 rounded-xl shadow-lg hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  {loading ? 'Salvando...' : 'Salvar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Financeiro do Paciente */}
+      {isPaymentModalOpen && selectedPacienteForPayment && (
+        <div className="fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-3xl p-8 max-w-xl w-full my-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-black text-slate-900">Financeiro: {selectedPacienteForPayment.nome_completo}</h2>
+              <button onClick={() => setIsPaymentModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Adicionar Pagamento */}
+            <form onSubmit={handleSavePagamento} className="bg-slate-50 p-6 rounded-2xl mb-8 border border-slate-100">
+              <h3 className="font-bold text-slate-800 mb-4 text-sm uppercase">Registrar Nova Sessão/Pagamento</h3>
+              <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                <div className="flex-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Data *</label>
+                  <input type="date" value={pagamentoData.data_sessao} onChange={e => setPagamentoData({...pagamentoData, data_sessao: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-2 outline-none focus:border-brand-orange" required />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Valor *</label>
+                  <input type="text" value={pagamentoData.valor} onChange={e => setPagamentoData({...pagamentoData, valor: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-2 outline-none focus:border-brand-orange" required />
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={pagamentoData.pago} onChange={e => setPagamentoData({...pagamentoData, pago: e.target.checked})} className="w-5 h-5 accent-brand-orange" />
+                  <span className="font-bold text-slate-700">Já foi pago?</span>
+                </label>
+                <button type="submit" disabled={loading} className="ml-auto bg-slate-900 text-white px-6 py-2 rounded-xl font-bold hover:bg-slate-800 transition-colors disabled:opacity-50">
+                  Adicionar
+                </button>
+              </div>
+            </form>
+
+            {/* Lista de Pagamentos */}
+            <div>
+              <h3 className="font-bold text-slate-800 mb-4 text-sm uppercase">Histórico</h3>
+              <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                {pagamentos.map(pag => (
+                  <div key={pag.id} className="flex items-center justify-between p-4 bg-white border-2 border-slate-100 rounded-xl">
+                    <div>
+                      <div className="font-bold text-slate-800">{new Date(pag.data_sessao + 'T12:00:00').toLocaleDateString('pt-BR')}</div>
+                      <div className="text-sm text-slate-500">R$ {pag.valor}</div>
+                    </div>
+                    <button 
+                      onClick={() => togglePago(pag)}
+                      className={`px-4 py-1.5 rounded-full text-xs font-bold border-2 transition-colors ${
+                        pag.pago 
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100' 
+                        : 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
+                      }`}
+                    >
+                      {pag.pago ? 'PAGO' : 'PENDENTE'}
+                    </button>
+                  </div>
+                ))}
+                {pagamentos.length === 0 && (
+                  <p className="text-slate-400 text-sm text-center py-4">Nenhum registro encontrado.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+};
