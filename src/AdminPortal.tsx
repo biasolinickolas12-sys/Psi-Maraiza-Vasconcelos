@@ -207,6 +207,29 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
       if (activeTab === 'financeiro') loadTodasSessoes();
     }
   };
+  const handleDeleteMonthData = async () => {
+    const mesNome = new Date(faturamentoAno, faturamentoMes - 1).toLocaleString('pt-BR', { month: 'long' });
+    if (!window.confirm(`ATENÇÃO: Você está prestes a apagar TODOS os registros de sessões e pagamentos de ${mesNome} de ${faturamentoAno}.\n\nEsta ação é irreversível. Deseja continuar?`)) return;
+    
+    setLoading(true);
+    const daysInMonth = new Date(faturamentoAno, faturamentoMes, 0).getDate();
+    const startDate = `${faturamentoAno}-${String(faturamentoMes).padStart(2, '0')}-01`;
+    const endDate = `${faturamentoAno}-${String(faturamentoMes).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+    
+    const { error } = await supabase
+      .from('pagamentos')
+      .delete()
+      .gte('data_sessao', startDate)
+      .lte('data_sessao', endDate);
+
+    if (!error) {
+      loadTodasSessoes();
+      alert("Dados do mês removidos com sucesso.");
+    } else {
+      alert("Erro ao remover dados.");
+    }
+    setLoading(false);
+  };
 
   const filteredPacientes = pacientes.filter(p => 
     p.nome_completo?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -279,6 +302,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
       .filter(s => s.data_sessao === selectedChartDay)
       .map(s => ({
         id: s.paciente_id,
+        sessionId: s.id,
         nome_completo: s.pacientes?.nome_completo || "Paciente",
         tipo: 'esporadico',
         valor: s.valor,
@@ -660,9 +684,17 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
 
                 {/* Filters Section */}
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                  <span className="text-slate-500 font-bold uppercase text-xs mb-4 block flex items-center gap-2">
-                    <Filter size={14} /> Filtros de Período
-                  </span>
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-slate-500 font-bold uppercase text-xs flex items-center gap-2">
+                      <Filter size={14} /> Filtros de Período
+                    </span>
+                    <button 
+                      onClick={handleDeleteMonthData}
+                      className="text-[10px] font-black text-red-400 hover:text-red-600 uppercase tracking-widest transition-colors"
+                    >
+                      Apagar Dados do Mês
+                    </button>
+                  </div>
                   <div className="flex gap-4">
                     <div className="flex-1">
                       <label className="block text-xs font-bold text-slate-700 mb-1">Mês</label>
@@ -736,10 +768,12 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                   </div>
                   <div className="space-y-3">
                     {pacientesDoDia.map(s => (
-                      <div key={`${s.id}-${s.tipo}`} className="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
+                      <div key={s.sessionId || `${s.id}-${s.tipo}`} className="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
                         <div>
                           <div className="font-bold text-slate-800">{s.nome_completo}</div>
-                          <div className="text-[10px] uppercase font-bold tracking-widest text-slate-400">{s.horario} • {s.tipo}</div>
+                          <div className="text-[10px] uppercase font-bold tracking-widest text-slate-400">
+                            {s.horario} • {s.tipo} {s.valor ? `• R$ ${s.valor}` : ''}
+                          </div>
                         </div>
                         <div>
                           {s.tipo === 'esporadico' ? (
