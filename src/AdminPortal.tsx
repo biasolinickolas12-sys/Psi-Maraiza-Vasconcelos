@@ -195,15 +195,27 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
   }, [sessoesMesSelecionado]);
 
   const chartData = useMemo(() => {
-    const daysMap = new Map<string, number>();
+    const daysInMonth = new Date(faturamentoAno, faturamentoMes, 0).getDate();
+    const data = [];
+    
+    // Create a map for O(1) lookup
+    const sessionCounts = new Map<string, number>();
     sessoesMesSelecionado.forEach(s => {
-      const dateStr = s.data_sessao; // YYYY-MM-DD
-      daysMap.set(dateStr, (daysMap.get(dateStr) || 0) + 1);
+      if (s.data_sessao) {
+        sessionCounts.set(s.data_sessao, (sessionCounts.get(s.data_sessao) || 0) + 1);
+      }
     });
-    return Array.from(daysMap.entries())
-      .map(([date, count]) => ({ date, consultas: count }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-  }, [sessoesMesSelecionado]);
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${faturamentoAno}-${String(faturamentoMes).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      data.push({ 
+        date: dateStr, 
+        consultas: sessionCounts.get(dateStr) || 0 
+      });
+    }
+    
+    return data;
+  }, [sessoesMesSelecionado, faturamentoMes, faturamentoAno]);
 
   const pacientesDoDia = useMemo(() => {
     if (!selectedChartDay) return [];
@@ -403,16 +415,30 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                         setSelectedChartDay(data.activeLabel === selectedChartDay ? null : data.activeLabel);
                       }
                     }}>
+                      <defs>
+                        <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#ff6600" stopOpacity={1} />
+                          <stop offset="100%" stopColor="#cc5200" stopOpacity={1} />
+                        </linearGradient>
+                      </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                      <XAxis dataKey="date" tickFormatter={(val) => new Date(val + 'T12:00:00').getDate().toString()} axisLine={false} tickLine={false} />
-                      <YAxis allowDecimals={false} axisLine={false} tickLine={false} />
+                      <XAxis 
+                        dataKey="date" 
+                        tickFormatter={(val) => new Date(val + 'T12:00:00').getDate().toString()} 
+                        axisLine={false} 
+                        tickLine={false}
+                        interval={0}
+                        tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }}
+                      />
+                      <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} />
                       <RechartsTooltip 
                         labelFormatter={(label) => new Date(label + 'T12:00:00').toLocaleDateString('pt-BR')}
-                        cursor={{fill: '#f1f5f9'}}
+                        cursor={{ fill: '#f8fafc', radius: 4 }}
+                        contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                       />
-                      <Bar dataKey="consultas" fill="#ff6600" radius={[4, 4, 0, 0]} cursor="pointer">
+                      <Bar dataKey="consultas" fill="url(#barGradient)" radius={[4, 4, 0, 0]} cursor="pointer" barSize={20}>
                         {chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.date === selectedChartDay ? '#cc5200' : '#ff6600'} />
+                          <Cell key={`cell-${index}`} fill={entry.date === selectedChartDay ? '#993d00' : 'url(#barGradient)'} />
                         ))}
                       </Bar>
                     </BarChart>
