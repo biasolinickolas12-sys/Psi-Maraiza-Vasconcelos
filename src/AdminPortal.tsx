@@ -419,37 +419,43 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
     const todayStr = new Date().toLocaleDateString('en-CA');
     const dayOfWeek = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][new Date().getDay()];
     
-    // Real sessions for today
-    const realSessions = sessoesMesSelecionado
+    // Real sessions for today (using todasSessoes to avoid month-filter dependency)
+    const realSessions = todasSessoes
       .filter(s => s.data_sessao === todayStr)
       .map(s => ({
         id: s.paciente_id,
         nome_completo: s.pacientes?.nome_completo || "Paciente",
         tipo: 'esporadico',
         horario: s.pacientes?.horario_consulta,
-        telefone: s.pacientes?.telefone
+        telefone: s.pacientes?.telefone,
+        relato: s.pacientes?.relato_proxima_triagem,
+        pauta: s.pacientes?.pauta_proxima_semana
       }));
 
-    // Fixed patients for today's weekday
-    const fixed = pacientesFixos
+    // Fixed patients for today's weekday (using raw pacientes to ignore search term)
+    const fixed = pacientes
       .filter(p => p.dia_fixo === dayOfWeek)
       .map(p => ({
         id: p.id,
         nome_completo: p.nome_completo,
         tipo: 'fixo',
         horario: p.horario_consulta,
-        telefone: p.telefone
+        telefone: p.telefone,
+        relato: p.relato_proxima_triagem,
+        pauta: p.pauta_proxima_semana
       }));
 
-    // Scheduled sporadic patients for today
-    const sporadicScheduled = pacientesEsporadicos
-      .filter(p => p.data_consulta === todayStr)
+    // Scheduled sporadic patients for today (using raw pacientes to ignore search term)
+    const sporadicScheduled = pacientes
+      .filter(p => !p.dia_fixo && p.data_consulta === todayStr)
       .map(p => ({
         id: p.id,
         nome_completo: p.nome_completo,
         tipo: 'esporadico',
         horario: p.horario_consulta,
-        telefone: p.telefone
+        telefone: p.telefone,
+        relato: p.relato_proxima_triagem,
+        pauta: p.pauta_proxima_semana
       }));
 
     const combined = [...realSessions];
@@ -460,7 +466,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
     });
 
     return combined.sort((a, b) => (a.horario || "").localeCompare(b.horario || ""));
-  }, [sessoesMesSelecionado, pacientesFixos, pacientesEsporadicos]);
+  }, [todasSessoes, pacientes]);
 
   if (!isLoggedIn) {
     return (
@@ -670,24 +676,37 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                           
                           <div className="ml-6 space-y-2">
                             {patientsAtThisHour.map(p => (
-                              <div key={p.id} className={`p-3 rounded-2xl border flex items-center justify-between transition-all group/item hover:scale-[1.02] ${p.tipo === 'fixo' ? 'bg-slate-900 text-white border-slate-800' : 'bg-brand-orange/5 border-brand-orange/10 text-slate-900'}`}>
-                                <div>
-                                  <span className="font-black text-sm block leading-none mb-1">{p.nome_completo}</span>
-                                  <span className={`text-[9px] uppercase font-bold tracking-widest ${p.tipo === 'fixo' ? 'text-slate-400' : 'text-brand-orange'}`}>{p.horario} • {p.tipo}</span>
+                              <div key={p.id} className={`p-4 rounded-[1.5rem] border flex flex-col gap-3 transition-all group/item hover:shadow-md ${p.tipo === 'fixo' ? 'bg-slate-900 text-white border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}>
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <span className="font-black text-base block leading-none mb-1">{p.nome_completo}</span>
+                                    <span className={`text-[10px] uppercase font-bold tracking-widest ${p.tipo === 'fixo' ? 'text-slate-400' : 'text-brand-orange'}`}>{p.horario} • {p.tipo}</span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <a 
+                                      href={`https://wa.me/55${p.telefone?.replace(/\D/g, '')}`} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all shadow-sm text-xs font-bold"
+                                    >
+                                      <MessageCircle size={16} />
+                                      WhatsApp
+                                    </a>
+                                    <button 
+                                      onClick={() => openFinanceiro(p)} 
+                                      className={`p-2 rounded-xl transition-colors ${p.tipo === 'fixo' ? 'bg-white/10 hover:bg-white/20' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
+                                    >
+                                      <DollarSign size={16} />
+                                    </button>
+                                  </div>
                                 </div>
-                                <div className="flex gap-2">
-                                  <a 
-                                    href={`https://wa.me/55${p.telefone?.replace(/\D/g, '')}`} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className={`p-2 rounded-xl transition-colors ${p.tipo === 'fixo' ? 'bg-white/10 hover:bg-emerald-500' : 'bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white'}`}
-                                  >
-                                    <MessageCircle size={14} />
-                                  </a>
-                                  <button onClick={() => openFinanceiro(p)} className={`p-2 rounded-xl transition-colors ${p.tipo === 'fixo' ? 'bg-white/10 hover:bg-white/20' : 'bg-brand-orange/10 hover:bg-brand-orange/20'}`}>
-                                    <DollarSign size={14} />
-                                  </button>
-                                </div>
+
+                                {(p.pauta || p.relato) && (
+                                  <div className={`text-[10px] p-3 rounded-xl ${p.tipo === 'fixo' ? 'bg-white/5 text-slate-300' : 'bg-slate-50 text-slate-500'} border ${p.tipo === 'fixo' ? 'border-white/10' : 'border-slate-100'}`}>
+                                    {p.pauta && <p className="line-clamp-1"><strong>Pauta:</strong> {p.pauta}</p>}
+                                    {p.relato && <p className="line-clamp-1 mt-1"><strong>Relato:</strong> {p.relato}</p>}
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
