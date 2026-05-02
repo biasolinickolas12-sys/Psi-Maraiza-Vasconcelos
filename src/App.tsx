@@ -470,34 +470,30 @@ const FAQSection = ({ isMobile }: { isMobile: boolean }) => {
         <div className="absolute inset-0 bg-slate-50/50 -z-10" />
         
         {/* Intense Animated Background Blobs */}
-        {!isMobile && (
-          <>
-            <motion.div
-              animate={{
-                scale: [1, 1.4, 1],
-                rotate: [0, 180, 0],
-                x: [0, 150, 0],
-              }}
-              transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-              className="absolute top-0 -right-40 w-[800px] h-[800px] bg-gradient-to-br from-brand-orange to-red-500 blur-[150px] rounded-full opacity-20 mix-blend-multiply"
-            />
-            <motion.div
-              animate={{
-                scale: [1, 1.2, 1],
-                rotate: [0, -120, 0],
-                x: [0, -100, 0],
-              }}
-              transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-              className="absolute -bottom-60 -left-20 w-[900px] h-[900px] bg-gradient-to-tr from-brand-yellow via-orange-400 to-transparent blur-[160px] rounded-full opacity-25 mix-blend-multiply"
-            />
-          </>
-        )}
+        <motion.div
+          animate={isMobile ? {} : {
+            scale: [1, 1.4, 1],
+            rotate: [0, 180, 0],
+            x: [0, 150, 0],
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          className="absolute top-0 -right-40 w-[800px] h-[800px] bg-gradient-to-br from-brand-orange to-red-500 blur-[150px] rounded-full opacity-20 mix-blend-multiply"
+        />
+        <motion.div
+          animate={isMobile ? {} : {
+            scale: [1, 1.2, 1],
+            rotate: [0, -120, 0],
+            x: [0, -100, 0],
+          }}
+          transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-60 -left-20 w-[900px] h-[900px] bg-gradient-to-tr from-brand-yellow via-orange-400 to-transparent blur-[160px] rounded-full opacity-25 mix-blend-multiply"
+        />
 
         {/* Geographic Floating Elements */}
-        {!isMobile && [...Array(6)].map((_, i) => (
+        {[...Array(6)].map((_, i) => (
           <motion.div
             key={`geo-${i}`}
-            animate={{
+            animate={isMobile ? {} : {
               y: [0, Math.random() * -100, 0],
               rotate: [0, 360],
               scale: [1, 1.1, 1]
@@ -761,9 +757,9 @@ export default function App() {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         onClick={() => setIsMenuOpen(true)}
-        className="fixed top-6 left-6 z-50 w-14 h-14 bg-white/80 backdrop-blur-xl rounded-full flex items-center justify-center shadow-xl border border-white group hover:bg-brand-orange transition-all duration-300"
+        className="fixed top-6 left-6 z-50 w-14 h-14 bg-white/80 backdrop-blur-xl rounded-full flex items-center justify-center shadow-[0_0_20px_#ff6600,inset_0_0_10px_#ff6600] border-[3px] border-[#ff6600] group hover:bg-[#ff6600] hover:shadow-[0_0_30px_#ff6600,inset_0_0_15px_#ff6600] transition-all duration-300"
       >
-        <Menu size={24} className="text-slate-900 group-hover:text-white transition-colors" />
+        <Menu size={24} className="text-[#ff6600] group-hover:text-white transition-colors" />
       </motion.button>
 
       {/* Slide-in Navigation Overlay */}
@@ -1701,7 +1697,7 @@ export default function App() {
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Moving Topographic Map Overlay - Increased Opacity */}
           <motion.div 
-            animate={{ 
+            animate={isMobile ? {} : { 
               backgroundPosition: ["0% 0%", "100% 100%"],
             }}
             transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
@@ -1714,7 +1710,7 @@ export default function App() {
 
           {/* Floating "Continents" / Organic Shapes - More Vibrant Colors and Higher Opacity */}
           <motion.div
-            animate={{ 
+            animate={isMobile ? {} : { 
               x: [-30, 30],
               y: [-30, 30],
               scale: [1, 1.2, 1],
@@ -1724,7 +1720,7 @@ export default function App() {
             className="absolute top-1/4 -left-20 w-[600px] h-[600px] bg-brand-orange/30 rounded-[40%_60%_70%_30%/40%_50%_60%_50%] blur-[100px]"
           />
           <motion.div
-            animate={{ 
+            animate={isMobile ? {} : { 
               x: [30, -30],
               y: [30, -30],
               scale: [1, 1.3, 1],
@@ -1734,7 +1730,7 @@ export default function App() {
             className="absolute bottom-1/4 -right-20 w-[700px] h-[700px] bg-brand-yellow/30 rounded-[60%_40%_30%_70%/50%_60%_40%_60%] blur-[120px]"
           />
           <motion.div
-            animate={{ 
+            animate={isMobile ? {} : { 
               y: [0, -60, 0],
               opacity: [0.15, 0.3, 0.15],
               scale: [1.2, 1.5, 1.2]
@@ -1747,8 +1743,8 @@ export default function App() {
           {[...Array(8)].map((_, i) => (
             <motion.div
               key={i}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ 
+              initial={{ scale: 1, opacity: 0.3 }}
+              animate={isMobile ? {} : { 
                 scale: [1, 3.5], 
                 opacity: [0.6, 0],
               }}
