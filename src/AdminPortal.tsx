@@ -926,7 +926,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="bg-white/80 p-4 rounded-2xl border border-slate-100">
-                            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Relato Próxima Triagem</span>
+                            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Relato Última Triagem</span>
                             <p className="text-xs text-slate-600 italic leading-relaxed">{s.relato || 'Nenhum relato preenchido.'}</p>
                           </div>
                           <div className="bg-white/80 p-4 rounded-2xl border border-slate-100">
@@ -970,7 +970,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                 <input type="text" value={formData.telefone} onChange={e => setFormData({...formData, telefone: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none" />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-bold text-slate-700 mb-1">Descrição de relato para a próxima triagem</label>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Descrição de relato da última triagem</label>
                 <textarea value={formData.relato_proxima_triagem} onChange={e => setFormData({...formData, relato_proxima_triagem: e.target.value})} className="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-brand-orange outline-none h-24 resize-none" />
               </div>
               <div className="md:col-span-2">
