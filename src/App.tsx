@@ -1185,9 +1185,9 @@ export default function App() {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.6, delay: 1.9 }}
-                    className="relative inline-block mx-1 px-5 py-1 bg-white rounded-full border border-slate-950 shadow-[0_5px_15px_rgba(0,0,0,0.08)] transition-all duration-500 hover:scale-105"
+                    className="relative inline-block mx-1 transition-all duration-500 hover:scale-105"
                   >
-                    <span className="relative z-10 italic font-black bg-gradient-to-r from-[#FF4500] via-[#FF8C00] to-[#FF4500] bg-[length:200%_auto] bg-clip-text text-transparent animate-[shimmer-text_3s_linear_infinite] brightness-110">
+                    <span className="relative z-10 italic font-black text-[#ff6600] drop-shadow-[0_0_15px_rgba(255,102,0,0.8)]">
                       <TypingText text="potência" />
                     </span>
                   </motion.span>
