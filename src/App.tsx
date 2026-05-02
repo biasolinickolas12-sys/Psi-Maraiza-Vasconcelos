@@ -617,6 +617,8 @@ const FAQSection = ({ isMobile }: { isMobile: boolean }) => {
       </div>
     </section>
   );
+};
+
 const AdminPortal = ({ onClose }: { onClose: () => void }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState("");
