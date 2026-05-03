@@ -130,12 +130,9 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
       `💭 *Queixa Principal:* ${answers.queixa}\n\n` +
       `Aguardo seu retorno para agendarmos! ✨🚀`;
     
-    // URLSearchParams é a forma mais robusta de codificar parâmetros de URL em JS moderno
-    const params = new URLSearchParams();
-    params.append('phone', phone);
-    params.append('text', message);
+    const encodedMessage = encodeURIComponent(message);
     
-    return `https://api.whatsapp.com/send?${params.toString()}`;
+    return `https://wa.me/${phone}?text=${encodedMessage}`;
   };
 
   const renderInput = (q: any) => {
