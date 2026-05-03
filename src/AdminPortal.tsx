@@ -647,6 +647,19 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
           
           {activeTab === 'agenda' && (
             <div className="space-y-10">
+              {/* Anotações Importantes na Agenda */}
+              <section className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                <span className="text-slate-500 font-bold uppercase text-xs mb-3 block flex items-center gap-2">
+                  <Edit2 size={14} /> Anotações Importantes
+                </span>
+                <textarea 
+                  value={notasImportantes}
+                  onChange={(e) => saveNotas(e.target.value)}
+                  placeholder="Digite aqui anotações, lembretes ou tarefas..."
+                  className="w-full bg-slate-50 rounded-2xl p-4 outline-none focus:bg-white border-2 border-transparent focus:border-brand-orange/20 transition-all text-slate-700 text-sm min-h-[120px] resize-none"
+                />
+              </section>
+
               {/* Agenda de Hoje - Timeline */}
               <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-brand-orange/5 rounded-bl-full -z-0" />
@@ -743,18 +756,6 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                 </div>
               </section>
 
-              {/* Anotações Importantes na Agenda */}
-              <section className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                <span className="text-slate-500 font-bold uppercase text-xs mb-3 block flex items-center gap-2">
-                  <Edit2 size={14} /> Anotações Importantes
-                </span>
-                <textarea 
-                  value={notasImportantes}
-                  onChange={(e) => saveNotas(e.target.value)}
-                  placeholder="Digite aqui anotações, lembretes ou tarefas..."
-                  className="w-full bg-slate-50 rounded-2xl p-4 outline-none focus:bg-white border-2 border-transparent focus:border-brand-orange/20 transition-all text-slate-700 text-sm min-h-[120px] resize-none"
-                />
-              </section>
             </div>
           )}
 
