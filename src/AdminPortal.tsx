@@ -43,7 +43,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
   const [faturamentoAno, setFaturamentoAno] = useState(new Date().getFullYear());
   const [todasSessoes, setTodasSessoes] = useState<any[]>([]);
   const [selectedChartDay, setSelectedChartDay] = useState<string | null>(null);
-  const [dayOverrides, setDayOverrides] = useState<Record<string, number>>({});
+  const [chartMaxY, setChartMaxY] = useState(20);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,15 +72,8 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
     const { data: mData } = await supabase.from('configuracoes').select('valor').eq('chave', 'meta_consultas').maybeSingle();
     if (mData) setMetaConsultas(Number(mData.valor) || 20);
 
-    const { data: overridesData } = await supabase.from('configuracoes').select('chave, valor').like('chave', 'override_pacientes_%');
-    if (overridesData) {
-      const overrides: Record<string, number> = {};
-      overridesData.forEach((item: any) => {
-        const dateStr = item.chave.replace('override_pacientes_', '');
-        overrides[dateStr] = Number(item.valor);
-      });
-      setDayOverrides(overrides);
-    }
+    const { data: maxYData } = await supabase.from('configuracoes').select('valor').eq('chave', 'chart_max_y').maybeSingle();
+    if (maxYData) setChartMaxY(Number(maxYData.valor) || 20);
   };
 
   const saveNotas = async (val: string) => {
@@ -93,19 +86,9 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
     await supabase.from('configuracoes').upsert({ chave: 'meta_consultas', valor: val.toString() });
   };
 
-  const handleSaveDayOverride = async (dateStr: string, value: string) => {
-    const chave = `override_pacientes_${dateStr}`;
-    if (value === '') {
-      await supabase.from('configuracoes').delete().eq('chave', chave);
-      setDayOverrides(prev => {
-        const next = { ...prev };
-        delete next[dateStr];
-        return next;
-      });
-    } else {
-      await supabase.from('configuracoes').upsert({ chave, valor: value });
-      setDayOverrides(prev => ({ ...prev, [dateStr]: Number(value) }));
-    }
+  const saveChartMaxY = async (val: number) => {
+    setChartMaxY(val);
+    await supabase.from('configuracoes').upsert({ chave: 'chart_max_y', valor: val.toString() });
   };
 
   const loadTodasSessoes = async () => {
@@ -358,14 +341,13 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
       const dayOfWeek = weekdaysMap[date.getDay()];
       const dateStr = `${faturamentoAno}-${String(faturamentoMes).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       
-      let expectedTotal = 0;
-      if (dayOverrides[dateStr] !== undefined) {
-        expectedTotal = dayOverrides[dateStr];
-      } else {
-        const fixedCount = pacientesFixos.filter(p => p.dia_fixo === dayOfWeek).length;
-        const sporadicScheduled = pacientesEsporadicos.filter(p => p.data_consulta === dateStr).length;
-        expectedTotal = fixedCount + sporadicScheduled;
-      }
+      // Count fixed patients for this day of week
+      const fixedCount = pacientesFixos.filter(p => p.dia_fixo === dayOfWeek).length;
+      // Count sporadic patients scheduled for this specific date
+      const sporadicScheduled = pacientesEsporadicos.filter(p => p.data_consulta === dateStr).length;
+      
+      const realCount = sessionCounts.get(dateStr) || 0;
+      const expectedTotal = fixedCount + sporadicScheduled;
       
       data.push({ 
         date: dateStr, 
@@ -374,7 +356,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
     }
     
     return data;
-  }, [sessoesMesSelecionado, faturamentoMes, faturamentoAno, pacientesFixos, pacientesEsporadicos, dayOverrides]);
+  }, [sessoesMesSelecionado, faturamentoMes, faturamentoAno, pacientesFixos, pacientesEsporadicos]);
 
   const pacientesDoDia = useMemo(() => {
     if (!selectedChartDay) return [];
@@ -865,7 +847,18 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
 
               {/* Gráfico */}
               <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                <span className="text-slate-500 font-bold uppercase text-xs mb-6 block">Consultas por Dia (Clique para filtrar)</span>
+                <div className="flex justify-between items-center mb-6">
+                  <span className="text-slate-500 font-bold uppercase text-xs">Consultas por Dia (Clique para filtrar)</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase text-slate-400">Limite no Gráfico:</span>
+                    <input 
+                      type="number" 
+                      value={chartMaxY}
+                      onChange={(e) => saveChartMaxY(Number(e.target.value) || 20)}
+                      className="w-16 bg-slate-50 border border-slate-200 rounded-lg p-1 text-center text-xs font-bold text-slate-700 focus:ring-2 focus:ring-brand-orange outline-none"
+                    />
+                  </div>
+                </div>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData} onClick={(data) => {
@@ -888,7 +881,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                         interval={0}
                         tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }}
                       />
-                      <YAxis domain={[0, 20]} ticks={[0, 5, 10, 15, 20]} axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} />
+                      <YAxis domain={[0, chartMaxY]} ticks={[0, Math.round(chartMaxY * 0.25), Math.round(chartMaxY * 0.5), Math.round(chartMaxY * 0.75), chartMaxY]} axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} />
                       <RechartsTooltip 
                         labelFormatter={(label) => new Date(label + 'T12:00:00').toLocaleDateString('pt-BR')}
                         cursor={{ fill: '#f8fafc', radius: 4 }}
@@ -912,16 +905,6 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                       Sessões do dia {new Date(selectedChartDay + 'T12:00:00').toLocaleDateString('pt-BR')}
                     </span>
                     <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
-                        <span className="text-[10px] font-black uppercase text-slate-500">No Gráfico:</span>
-                        <input
-                          type="number"
-                          placeholder="Auto"
-                          value={dayOverrides[selectedChartDay] !== undefined ? dayOverrides[selectedChartDay] : ''}
-                          onChange={(e) => handleSaveDayOverride(selectedChartDay, e.target.value)}
-                          className="w-12 bg-transparent text-center font-bold text-brand-orange outline-none text-sm placeholder:text-slate-300"
-                        />
-                      </div>
                       <button 
                         onClick={handleDeleteDayData}
                         className="text-[10px] font-black text-red-400 hover:text-red-600 uppercase tracking-widest transition-colors"
