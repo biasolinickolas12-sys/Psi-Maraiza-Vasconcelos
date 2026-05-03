@@ -316,8 +316,7 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
               </div>
             )}
 
-            <motion.div 
-              layout={!isMobile}
+            <div 
               className={`bg-white/95 ${isMobile ? 'backdrop-blur-sm' : 'backdrop-blur-2xl'} rounded-[2.5rem] md:rounded-[4rem] p-6 mb-8 md:p-20 border-[6px] relative overflow-hidden group transition-all duration-700 ${!isMobile ? 'neon-card-glow' : 'border-brand-orange border-b-brand-yellow border-r-brand-yellow shadow-xl shadow-brand-orange/10'}`}
               style={{
                 backgroundImage: "linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(254,250,246,1) 100%)",
@@ -337,6 +336,7 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
                     className="text-center py-20"
                   >
                     <div className="relative w-32 h-32 mx-auto mb-12">
@@ -363,8 +363,9 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
                 ) : completed ? (
                   <motion.div 
                     key="completed"
-                    initial={{ opacity: 0, scale: 0.9 }}
+                    initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.4 }}
                     className="text-center py-10"
                   >
                     <div className="relative w-36 h-36 mx-auto mb-12">
@@ -405,10 +406,10 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
                 ) : (
                   <motion.div
                     key={step}
-                    initial={{ opacity: 0, x: isMobile ? 20 : 50, ...(isMobile ? {} : { filter: "blur(10px)" }) }}
-                    animate={{ opacity: 1, x: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
-                    exit={{ opacity: 0, x: isMobile ? -20 : -50, ...(isMobile ? {} : { filter: "blur(10px)" }) }}
-                    transition={{ duration: 0.4, ease: "circOut" }}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
                     className="w-full"
                   >
                     <div className="mb-8 md:mb-12">
@@ -446,7 +447,7 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>
