@@ -6,7 +6,7 @@ import { supabase } from "./supabase";
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 
 export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('isLoggedIn') === 'true');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -100,7 +100,6 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
   };
 
   useEffect(() => {
-    localStorage.setItem('isLoggedIn', isLoggedIn.toString());
     if (isLoggedIn) {
       loadPacientes();
       if (activeTab === 'financeiro') {
