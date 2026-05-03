@@ -43,6 +43,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
   const [faturamentoAno, setFaturamentoAno] = useState(new Date().getFullYear());
   const [todasSessoes, setTodasSessoes] = useState<any[]>([]);
   const [selectedChartDay, setSelectedChartDay] = useState<string | null>(null);
+  const [dayOverrides, setDayOverrides] = useState<Record<string, number>>({});
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +71,16 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
     
     const { data: mData } = await supabase.from('configuracoes').select('valor').eq('chave', 'meta_consultas').maybeSingle();
     if (mData) setMetaConsultas(Number(mData.valor) || 20);
+
+    const { data: overridesData } = await supabase.from('configuracoes').select('chave, valor').like('chave', 'override_pacientes_%');
+    if (overridesData) {
+      const overrides: Record<string, number> = {};
+      overridesData.forEach((item: any) => {
+        const dateStr = item.chave.replace('override_pacientes_', '');
+        overrides[dateStr] = Number(item.valor);
+      });
+      setDayOverrides(overrides);
+    }
   };
 
   const saveNotas = async (val: string) => {
@@ -80,6 +91,21 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
   const saveMeta = async (val: number) => {
     setMetaConsultas(val);
     await supabase.from('configuracoes').upsert({ chave: 'meta_consultas', valor: val.toString() });
+  };
+
+  const handleSaveDayOverride = async (dateStr: string, value: string) => {
+    const chave = `override_pacientes_${dateStr}`;
+    if (value === '') {
+      await supabase.from('configuracoes').delete().eq('chave', chave);
+      setDayOverrides(prev => {
+        const next = { ...prev };
+        delete next[dateStr];
+        return next;
+      });
+    } else {
+      await supabase.from('configuracoes').upsert({ chave, valor: value });
+      setDayOverrides(prev => ({ ...prev, [dateStr]: Number(value) }));
+    }
   };
 
   const loadTodasSessoes = async () => {
@@ -332,13 +358,14 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
       const dayOfWeek = weekdaysMap[date.getDay()];
       const dateStr = `${faturamentoAno}-${String(faturamentoMes).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       
-      // Count fixed patients for this day of week
-      const fixedCount = pacientesFixos.filter(p => p.dia_fixo === dayOfWeek).length;
-      // Count sporadic patients scheduled for this specific date
-      const sporadicScheduled = pacientesEsporadicos.filter(p => p.data_consulta === dateStr).length;
-      
-      const realCount = sessionCounts.get(dateStr) || 0;
-      const expectedTotal = fixedCount + sporadicScheduled;
+      let expectedTotal = 0;
+      if (dayOverrides[dateStr] !== undefined) {
+        expectedTotal = dayOverrides[dateStr];
+      } else {
+        const fixedCount = pacientesFixos.filter(p => p.dia_fixo === dayOfWeek).length;
+        const sporadicScheduled = pacientesEsporadicos.filter(p => p.data_consulta === dateStr).length;
+        expectedTotal = fixedCount + sporadicScheduled;
+      }
       
       data.push({ 
         date: dateStr, 
@@ -347,7 +374,7 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
     }
     
     return data;
-  }, [sessoesMesSelecionado, faturamentoMes, faturamentoAno, pacientesFixos, pacientesEsporadicos]);
+  }, [sessoesMesSelecionado, faturamentoMes, faturamentoAno, pacientesFixos, pacientesEsporadicos, dayOverrides]);
 
   const pacientesDoDia = useMemo(() => {
     if (!selectedChartDay) return [];
@@ -885,6 +912,16 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
                       Sessões do dia {new Date(selectedChartDay + 'T12:00:00').toLocaleDateString('pt-BR')}
                     </span>
                     <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                        <span className="text-[10px] font-black uppercase text-slate-500">No Gráfico:</span>
+                        <input
+                          type="number"
+                          placeholder="Auto"
+                          value={dayOverrides[selectedChartDay] !== undefined ? dayOverrides[selectedChartDay] : ''}
+                          onChange={(e) => handleSaveDayOverride(selectedChartDay, e.target.value)}
+                          className="w-12 bg-transparent text-center font-bold text-brand-orange outline-none text-sm placeholder:text-slate-300"
+                        />
+                      </div>
                       <button 
                         onClick={handleDeleteDayData}
                         className="text-[10px] font-black text-red-400 hover:text-red-600 uppercase tracking-widest transition-colors"
