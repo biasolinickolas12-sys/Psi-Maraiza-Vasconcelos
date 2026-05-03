@@ -426,26 +426,27 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row justify-between items-center mt-8 md:mt-12 gap-6 pt-8 md:pt-12 border-t border-slate-100">
+                    <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-8 md:mt-12 gap-4 sm:gap-6 pt-8 md:pt-12 border-t border-slate-100 relative z-20">
                       <button 
                         onClick={() => step > 0 && setStep(step - 1)}
-                        className={`text-sm font-black transition-all ${step === 0 ? "opacity-0 pointer-events-none" : "text-slate-400 hover:text-brand-orange tracking-widest uppercase flex items-center gap-2"}`}
+                        className={`text-sm sm:text-base font-black transition-all py-4 px-6 w-full sm:w-auto rounded-xl ${step === 0 ? "opacity-0 pointer-events-none hidden sm:flex" : "text-slate-400 hover:text-brand-orange hover:bg-slate-50 active:bg-slate-100 tracking-widest uppercase flex items-center justify-center gap-2"}`}
+                        style={step === 0 ? { display: 'none' } : {}}
                       >
-                        <ChevronLeft size={16} />
-                        Voltar
+                        <ChevronLeft size={18} className="pointer-events-none" />
+                        <span className="pointer-events-none">Voltar</span>
                       </button>
                       
                       <button 
                         onClick={handleNext}
                         disabled={!answers[questions[step].id]}
-                        className={`w-full sm:w-auto bg-slate-900 text-white font-black py-6 px-14 rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-slate-900/10 transition-all ${
+                        className={`w-full sm:w-auto bg-slate-900 text-white font-black py-5 sm:py-6 px-10 sm:px-14 rounded-2xl flex items-center justify-center gap-4 text-lg shadow-xl shadow-slate-900/10 transition-all cursor-pointer ${
                           !answers[questions[step].id] 
                             ? "opacity-30 cursor-not-allowed bg-slate-200" 
-                            : "hover:bg-brand-orange hover:shadow-brand-orange/30 hover:-translate-y-1 active:translate-y-0"
+                            : "hover:bg-brand-orange hover:shadow-brand-orange/30 hover:-translate-y-1 active:scale-95 active:translate-y-0"
                         }`}
                       >
-                        <span>{step === questions.length - 1 ? "Finalizar Agora" : "Próximo Passo"}</span>
-                        <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                        <span className="pointer-events-none">{step === questions.length - 1 ? "Finalizar Agora" : "Próximo Passo"}</span>
+                        <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform pointer-events-none" />
                       </button>
                     </div>
                   </motion.div>
