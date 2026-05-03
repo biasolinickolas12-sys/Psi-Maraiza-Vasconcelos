@@ -67,7 +67,9 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
     { 
       id: "idade", 
       label: "Quantos anos tem?", 
-      type: "tel", 
+      type: "text", 
+      inputMode: "numeric",
+      pattern: "[0-9]*",
       placeholder: "Ex: 28" 
     },
     { 
@@ -145,6 +147,8 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
         >
           <input 
             type={q.type}
+            inputMode={q.inputMode}
+            pattern={q.pattern}
             placeholder={q.placeholder}
             value={answers[q.id]}
             onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
