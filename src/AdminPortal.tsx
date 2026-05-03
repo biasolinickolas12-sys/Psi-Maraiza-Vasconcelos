@@ -512,9 +512,6 @@ export const AdminPortal = ({ onClose }: { onClose: () => void }) => {
               <span className="font-black text-brand-orange text-sm">{new Date(p.data_consulta + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
             </div>
           )}
-          <button onClick={() => openFinanceiro(p)} className="p-3 bg-brand-orange/10 text-brand-orange hover:bg-brand-orange hover:text-white rounded-2xl transition-all shadow-sm" title="Financeiro">
-            <DollarSign size={20} />
-          </button>
         </div>
       </div>
       
