@@ -67,7 +67,7 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
     { 
       id: "idade", 
       label: "Quantos anos tem?", 
-      type: "number", 
+      type: "tel", 
       placeholder: "Ex: 28" 
     },
     { 
@@ -139,7 +139,7 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
   };
 
   const renderInput = (q: any) => {
-    if (q.type === "text" || q.type === "number") {
+    if (q.type === "text" || q.type === "number" || q.type === "tel") {
       return (
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
