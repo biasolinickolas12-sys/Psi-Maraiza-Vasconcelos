@@ -405,10 +405,10 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
                 ) : (
                   <motion.div
                     key={step}
-                    initial={{ opacity: 0, x: isMobile ? 20 : 50, filter: isMobile ? "none" : "blur(10px)" }}
-                    animate={{ opacity: 1, x: 0, filter: "none" }}
-                    exit={{ opacity: 0, x: isMobile ? -20 : -50, filter: isMobile ? "none" : "blur(10px)" }}
-                    transition={{ duration: 0.6, ease: "circOut" }}
+                    initial={{ opacity: 0, x: isMobile ? 20 : 50, ...(isMobile ? {} : { filter: "blur(10px)" }) }}
+                    animate={{ opacity: 1, x: 0, ...(isMobile ? {} : { filter: "blur(0px)" }) }}
+                    exit={{ opacity: 0, x: isMobile ? -20 : -50, ...(isMobile ? {} : { filter: "blur(10px)" }) }}
+                    transition={{ duration: 0.4, ease: "circOut" }}
                     className="w-full"
                   >
                     <div className="mb-8 md:mb-12">
