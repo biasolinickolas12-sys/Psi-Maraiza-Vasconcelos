@@ -1636,7 +1636,7 @@ export default function App() {
                 </h2>
                 
                 <h3 className="font-serif text-5xl md:text-7xl font-bold mb-8 text-slate-900 leading-tight">
-                  Dra. Maraiza <br />
+                  Maraiza <br />
                   <span className="text-brand-orange italic underline decoration-brand-yellow/40 decoration-wavy underline-offset-8">Vasconcelos</span>
                 </h3>
                 
