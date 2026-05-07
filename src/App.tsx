@@ -130,15 +130,15 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
   const generateWhatsAppLink = () => {
     const phone = "553498859591";
     
-    const message = `🌟 *Nova Triagem Digital Realizada!* 🌟\n\n` +
-      `Olá Maraiza! 👋 Acabei de completar o formulário no seu site e gostaria de iniciar meu acompanhamento psicoterapêutico. 🤝\n\n` +
-      `✨ *Meus dados:*\n` +
-      `👤 *Nome:* ${answers.nome}\n` +
-      `🎂 *Idade:* ${answers.idade}\n` +
-      `🏥 *Tipo de Atendimento:* ${answers.tipo_servico}\n` +
-      `🎯 *Objetivo:* ${answers.objetivo}\n` +
-      `💭 *Queixa Principal:* ${answers.queixa}\n\n` +
-      `Aguardo seu retorno para agendarmos! ✨🚀`;
+    const message = "\uD83C\uDF1F *Nova Triagem Digital Realizada!* \uD83C\uDF1F\n\n" +
+      "Ol\u00E1 Maraiza! \uD83D\uDC4B Acabei de completar o formul\u00E1rio no seu site e gostaria de iniciar meu acompanhamento psicoterap\u00EAutico. \uD83E\uDD1D\n\n" +
+      "\u2728 *Meus dados:*\n" +
+      `\uD83D\uDC64 *Nome:* ${answers.nome}\n` +
+      `\uD83C\uDF82 *Idade:* ${answers.idade}\n` +
+      `\uD83C\uDFE5 *Tipo de Atendimento:* ${answers.tipo_servico}\n` +
+      `\uD83C\uDFAF *Objetivo:* ${answers.objetivo}\n` +
+      `\uD83D\uDcad *Queixa Principal:* ${answers.queixa}\n\n` +
+      "Aguardo seu retorno para agendarmos! \u2728\uD83D\uDE80";
     
     const encodedMessage = encodeURIComponent(message);
     
