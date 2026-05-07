@@ -130,15 +130,27 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
   const generateWhatsAppLink = () => {
     const phone = "553498859591";
     
-    const message = "\uD83C\uDF1F *Nova Triagem Digital Realizada!* \uD83C\uDF1F\n\n" +
-      "Ol\u00E1 Maraiza! \uD83D\uDC4B Acabei de completar o formul\u00E1rio no seu site e gostaria de iniciar meu acompanhamento psicoterap\u00EAutico. \uD83E\uDD1D\n\n" +
-      "\u2728 *Meus dados:*\n" +
-      `\uD83D\uDC64 *Nome:* ${answers.nome}\n` +
-      `\uD83C\uDF82 *Idade:* ${answers.idade}\n` +
-      `\uD83C\uDFE5 *Tipo de Atendimento:* ${answers.tipo_servico}\n` +
-      `\uD83C\uDFAF *Objetivo:* ${answers.objetivo}\n` +
-      `\uD83D\uDcad *Queixa Principal:* ${answers.queixa}\n\n` +
-      "Aguardo seu retorno para agendarmos! \u2728\uD83D\uDE80";
+    // Emojis via Code Points to prevent any encoding corruption
+    const star = String.fromCodePoint(0x1F31F);
+    const wave = String.fromCodePoint(0x1F44B);
+    const shake = String.fromCodePoint(0x1F91D);
+    const sparkles = String.fromCodePoint(0x2728);
+    const person = String.fromCodePoint(0x1F464);
+    const cake = String.fromCodePoint(0x1F382);
+    const clinic = String.fromCodePoint(0x1F3E5);
+    const target = String.fromCodePoint(0x1F3AF);
+    const thought = String.fromCodePoint(0x1F4AD);
+    const rocket = String.fromCodePoint(0x1F680);
+
+    const message = `${star} *Nova Triagem Digital Realizada!* ${star}\n\n` +
+      `Ol\u00E1 Maraiza! ${wave} Acabei de completar o formul\u00E1rio no seu site e gostaria de iniciar meu acompanhamento psicoterap\u00EAutico. ${shake}\n\n` +
+      `${sparkles} *Meus dados:*\n` +
+      `${person} *Nome:* ${answers.nome}\n` +
+      `${cake} *Idade:* ${answers.idade}\n` +
+      `${clinic} *Tipo de Atendimento:* ${answers.tipo_servico}\n` +
+      `${target} *Objetivo:* ${answers.objetivo}\n` +
+      `${thought} *Queixa Principal:* ${answers.queixa}\n\n` +
+      `Aguardo seu retorno para agendarmos! ${sparkles}${rocket}`;
     
     const encodedMessage = encodeURIComponent(message);
     
