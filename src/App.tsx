@@ -1140,8 +1140,7 @@ export default function App() {
                       <Heart size={10} className="text-white" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[55%] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-0.5 md:mb-1">Psicóloga</span>
-                      <span className="text-[65%] md:text-sm font-extrabold text-slate-800 tracking-tight">Maraiza Vasconcelos</span>
+                      <span className="text-[65%] md:text-sm font-extrabold text-slate-800 tracking-tight">Psicóloga Clínica e Social</span>
                     </div>
                   </div>
                 </motion.div>
