@@ -1103,8 +1103,7 @@ export default function App() {
                       <GraduationCap size={10} className="text-white" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[55%] md:text-[10px] font-black text-brand-orange uppercase tracking-[0.25em] mb-0.5 md:mb-1">Especialidade</span>
-                      <span className="text-[65%] md:text-sm font-extrabold text-slate-800 tracking-tight">Psicodrama Clínico</span>
+                      <span className="text-[65%] md:text-sm font-extrabold text-slate-800 tracking-tight">Psicodrama</span>
                     </div>
                   </div>
                 </motion.div>
