@@ -53,6 +53,7 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
   const [answers, setAnswers] = useState<Record<string, string>>({
     nome: "",
     idade: "",
+    tipo_servico: "",
     objetivo: "",
     queixa: "",
   });
@@ -71,6 +72,12 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
       inputMode: "numeric",
       pattern: "[0-9]*",
       placeholder: "Ex: 28" 
+    },
+    { 
+      id: "tipo_servico", 
+      label: "Qual tipo de atendimento você procura?", 
+      type: "choice", 
+      options: ["Atendimento individual", "Atendimento de grupos", "Orientação vocacional"] 
     },
     { 
       id: "objetivo", 
@@ -128,6 +135,7 @@ const TriageSection = ({ isMobile }: { isMobile: boolean }) => {
       `✨ *Meus dados:*\n` +
       `👤 *Nome:* ${answers.nome}\n` +
       `🎂 *Idade:* ${answers.idade}\n` +
+      `🏥 *Tipo de Atendimento:* ${answers.tipo_servico}\n` +
       `🎯 *Objetivo:* ${answers.objetivo}\n` +
       `💭 *Queixa Principal:* ${answers.queixa}\n\n` +
       `Aguardo seu retorno para agendarmos! ✨🚀`;
