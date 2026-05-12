@@ -1153,15 +1153,16 @@ export default function App() {
                   initial={{ opacity: 0, y: 30, scale: 1.05 }}
                   animate={{ opacity: 1, y: -5, scale: 1.05 }}
                   transition={{ duration: 1, delay: 1.6 }}
-                  className="absolute -bottom-6 -left-10 md:bottom-12 md:-left-64 z-20"
+                  className="absolute -bottom-6 -left-10 md:bottom-12 md:-left-40 z-20"
                 >
                   <div className="bg-white/80 backdrop-blur-2xl px-2 py-1 md:px-6 md:py-4 rounded-[1rem] md:rounded-[2.5rem] shadow-[0_0_20px_rgba(255,107,53,0.4),0_20px_50px_rgba(255,107,53,0.15)] border border-white/60 flex items-center gap-1.5 md:gap-4 group cursor-default relative overflow-hidden ring-1 md:ring-2 ring-brand-orange">
                     <div className="absolute inset-0 bg-gradient-to-tr from-slate-200/10 to-transparent opacity-100 transition-opacity" />
                     <div className="w-5 h-5 md:w-11 md:h-11 rounded-full bg-slate-900 flex items-center justify-center shadow-[0_0_20px_rgba(0,0,0,0.2)]">
                       <Heart size={10} className="text-white" />
                     </div>
-                    <div className="flex flex-col text-center">
-                      <span className="text-[65%] md:text-sm font-extrabold text-slate-800 tracking-tight">Maraiza Vasconcelos</span>
+                    <div className="flex flex-col">
+                      <span className="text-[55%] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-0.5 md:mb-1">Trajetória</span>
+                      <span className="text-[65%] md:text-sm font-extrabold text-slate-800 tracking-tight">Transformação</span>
                     </div>
                   </div>
                 </motion.div>
