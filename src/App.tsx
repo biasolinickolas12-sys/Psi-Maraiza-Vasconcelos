@@ -677,25 +677,46 @@ const FeedbackSection = ({ isMobile }: { isMobile: boolean }) => {
 
   return (
     <section id="feedbacks" className="py-24 md:py-32 bg-white relative overflow-hidden">
-      {/* Background Decor */}
+      {/* Background Decor - Blush Effects */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full bg-slate-50/30 -z-10" />
+        
+        {/* Soft Blush Blobs */}
         <motion.div
           animate={isMobile ? {} : {
             scale: [1, 1.2, 1],
-            rotate: [0, 90, 0],
+            x: [0, 100, 0],
+            y: [0, 50, 0],
           }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-brand-orange/5 rounded-full blur-[120px]"
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[10%] -right-20 w-[600px] h-[600px] bg-brand-orange/10 rounded-full blur-[140px] opacity-60"
         />
+        
         <motion.div
           animate={isMobile ? {} : {
-            scale: [1, 1.1, 1],
-            x: [0, 50, 0],
+            scale: [1, 1.3, 1],
+            x: [0, -80, 0],
+            y: [0, 100, 0],
           }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-brand-yellow/5 rounded-full blur-[100px]"
+          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute bottom-[10%] -left-20 w-[700px] h-[700px] bg-brand-yellow/10 rounded-full blur-[160px] opacity-50"
         />
+
+        <motion.div
+          animate={isMobile ? {} : {
+            scale: [1, 1.4, 1],
+            opacity: [0.3, 0.6, 0.3],
+          }}
+          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-brand-rose/5 rounded-full blur-[180px]"
+        />
+
+        {/* Decorative Floating Dots for Blush Feel */}
+        <div className="absolute top-1/4 right-[15%] w-48 h-48 bg-brand-orange/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 left-[10%] w-64 h-64 bg-brand-yellow/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        
+        {/* Subtle Texture Overlay */}
+        <div className="absolute inset-0 opacity-[0.02] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none" />
       </div>
 
       <div className="container mx-auto px-6 relative z-10">
