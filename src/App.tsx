@@ -37,7 +37,8 @@ import {
   DollarSign,
   CalendarDays,
   LineChart as LineChartIcon,
-  Filter
+  Filter,
+  Quote
 } from "lucide-react";
 import React, { useState, useEffect, useMemo } from "react";
 import { AdminPortal } from "./AdminPortal";
@@ -650,6 +651,123 @@ const FAQSection = ({ isMobile }: { isMobile: boolean }) => {
                   </motion.div>
                 )}
               </AnimatePresence>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const FeedbackSection = ({ isMobile }: { isMobile: boolean }) => {
+  const testimonials = [
+    {
+      text: "Eu amo os nossos encontros, eu me sinto muito acolhida, estamos há quase 1 ano juntas e posso dizer com muita certeza que eu evolui muito em diversas áreas da minha vida. A forma como você se mostra presente sempre, faz toda diferença para mim.\nTu é a melhor psi 💙",
+      author: "Paciente"
+    },
+    {
+      text: "Olá!\nEstou muito feliz em poder relatar/falar um pouco da minha experiência. Comecei a terapia com psicodrama um ano atrás. Guiada pela Maraiza durante as sessões, posso dizer que hoje me sinto mais forte e com uma visão mais clara de mim mesma. Neste meu processo, me sinto segura e respeitada e ela, com total profissionalismo e delicadeza me ajuda a olhar para as minhas emoções, a interagir e aceitá-las, as reconhecendo e as aceitando como parte da minha história. Posso afirmar com segurança que vivi e vivo uma transformação maravilhosa através dos nossos encontros",
+      author: "Paciente"
+    },
+    {
+      text: "Eu te admiro muito Maraiza, é muito bom conversar com vc ❤️ Desde que a gente começou a se falar eu melhorei muito. Eu gosto muito que você sempre me faz sentir à vontade, me acolhe e consegue me fazer colocar em palavras o que nem eu mesma entendo. Você me encoraja e se preocupa de verdade comigo. Quero mudar de psicóloga nuncaaa ❤️",
+      author: "Paciente"
+    }
+  ];
+
+  return (
+    <section id="feedbacks" className="py-24 md:py-32 bg-white relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full bg-slate-50/30 -z-10" />
+        <motion.div
+          animate={isMobile ? {} : {
+            scale: [1, 1.2, 1],
+            rotate: [0, 90, 0],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-brand-orange/5 rounded-full blur-[120px]"
+        />
+        <motion.div
+          animate={isMobile ? {} : {
+            scale: [1, 1.1, 1],
+            x: [0, 50, 0],
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-brand-yellow/5 rounded-full blur-[100px]"
+        />
+      </div>
+
+      <div className="container mx-auto px-6 relative z-10">
+        <div className="max-w-3xl mx-auto text-center mb-16 md:mb-24">
+          <motion.div
+             initial={{ opacity: 0, y: 20 }}
+             whileInView={{ opacity: 1, y: 0 }}
+             viewport={{ once: true }}
+          >
+            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-slate-900 border border-brand-orange/20 text-white font-bold text-[8px] md:text-[10px] uppercase tracking-[0.2em] mb-6 md:mb-8 shadow-2xl shadow-brand-orange/10">
+              <MessageCircle size={14} className="text-brand-orange" />
+              <span>Relatos de Transformação</span>
+            </div>
+            
+            <h2 className="font-serif text-4xl md:text-7xl font-bold mb-6 text-slate-900 leading-tight tracking-tighter">
+              O que dizem as <br />
+              <span className="text-brand-orange italic font-light relative">
+                Pacientes.
+                <motion.div 
+                  initial={{ width: 0 }}
+                  whileInView={{ width: '100%' }}
+                  className="absolute -bottom-2 left-0 h-1 bg-gradient-to-r from-brand-orange to-transparent"
+                />
+              </span>
+            </h2>
+            <p className="text-slate-500 text-lg md:text-xl font-serif italic max-w-xl mx-auto mt-6">
+              "Cada processo é único, mas o acolhimento e a evolução são constantes em nossa jornada."
+            </p>
+          </motion.div>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8 md:gap-12">
+          {testimonials.map((item, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: idx * 0.2 }}
+              className="group relative"
+            >
+              <div className="h-full bg-white/60 backdrop-blur-xl p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] border-2 border-brand-orange/10 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.05)] hover:border-brand-orange/40 hover:shadow-[0_30px_70px_-20px_rgba(249,115,22,0.15)] transition-all duration-700 flex flex-col relative overflow-hidden">
+                {/* Quote Icon Background */}
+                <div className="absolute -top-6 -right-6 opacity-[0.03] group-hover:opacity-10 transition-opacity duration-700">
+                  <Quote size={160} className="text-brand-orange rotate-12" />
+                </div>
+
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-brand-orange/10 rounded-2xl flex items-center justify-center mb-8 rotate-3 group-hover:rotate-12 transition-transform duration-500">
+                    <Quote size={24} className="text-brand-orange" />
+                  </div>
+                  
+                  <p className="text-slate-700 text-lg md:text-xl leading-relaxed font-serif italic mb-8 relative">
+                    <span className="absolute -left-4 -top-2 text-4xl text-brand-orange/10 font-serif">"</span>
+                    {item.text}
+                    <span className="text-brand-orange/10 font-serif text-4xl absolute -bottom-6">"</span>
+                  </p>
+                </div>
+
+                <div className="mt-auto pt-8 border-t border-slate-100 flex items-center gap-4 relative z-10">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center text-white font-black text-xs shadow-lg shadow-brand-orange/20">
+                    {item.author[0]}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-black text-slate-900 uppercase tracking-widest">{item.author}</span>
+                    <span className="text-[10px] font-bold text-brand-orange uppercase tracking-widest">Depoimento Real</span>
+                  </div>
+                </div>
+
+                {/* Bottom Glow */}
+                <div className="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand-orange via-brand-yellow to-brand-orange bg-[length:200%_auto] opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-gradient-xy" />
+              </div>
             </motion.div>
           ))}
         </div>
@@ -1959,6 +2077,8 @@ export default function App() {
 
         </div>
       </section>
+
+      <FeedbackSection isMobile={isMobile} />
 
       <FAQSection isMobile={isMobile} />
 
