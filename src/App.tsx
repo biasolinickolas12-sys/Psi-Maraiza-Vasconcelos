@@ -676,47 +676,49 @@ const FeedbackSection = ({ isMobile }: { isMobile: boolean }) => {
   ];
 
   return (
-    <section id="feedbacks" className="py-24 md:py-32 bg-white relative overflow-hidden">
+    <section id="feedbacks" className="py-24 md:py-32 relative overflow-hidden">
       {/* Background Decor - Blush Effects */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full bg-slate-50/30 -z-10" />
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute inset-0 bg-white" />
+        <div className="absolute inset-0 bg-slate-50/50" />
         
-        {/* Soft Blush Blobs */}
+        {/* Soft Blush Blobs - Increased Intensity for visibility */}
         <motion.div
           animate={isMobile ? {} : {
             scale: [1, 1.2, 1],
-            x: [0, 100, 0],
-            y: [0, 50, 0],
+            x: [0, 80, 0],
+            y: [0, 40, 0],
           }}
           transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[10%] -right-20 w-[600px] h-[600px] bg-brand-orange/10 rounded-full blur-[140px] opacity-60"
+          className="absolute top-[0%] -right-20 w-[800px] h-[800px] bg-brand-orange/30 rounded-full blur-[100px] opacity-70"
         />
         
         <motion.div
           animate={isMobile ? {} : {
             scale: [1, 1.3, 1],
-            x: [0, -80, 0],
-            y: [0, 100, 0],
+            x: [0, -60, 0],
+            y: [0, 80, 0],
           }}
           transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute bottom-[10%] -left-20 w-[700px] h-[700px] bg-brand-yellow/10 rounded-full blur-[160px] opacity-50"
+          className="absolute bottom-[0%] -left-20 w-[900px] h-[900px] bg-brand-yellow/30 rounded-full blur-[120px] opacity-60"
         />
 
         <motion.div
           animate={isMobile ? {} : {
             scale: [1, 1.4, 1],
-            opacity: [0.3, 0.6, 0.3],
+            opacity: [0.4, 0.8, 0.4],
           }}
           transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-brand-rose/5 rounded-full blur-[180px]"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-brand-rose/20 rounded-full blur-[150px]"
         />
 
         {/* Decorative Floating Dots for Blush Feel */}
-        <div className="absolute top-1/4 right-[15%] w-48 h-48 bg-brand-orange/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 left-[10%] w-64 h-64 bg-brand-yellow/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/3 right-[10%] w-64 h-64 bg-brand-orange/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/3 left-[5%] w-80 h-80 bg-brand-yellow/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
         
-        {/* Subtle Texture Overlay */}
-        <div className="absolute inset-0 opacity-[0.02] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none" />
+        {/* Subtle Texture Overlay - Fixed SVG Noise */}
+        <div className="absolute inset-0 opacity-[0.05] pointer-events-none" 
+             style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
       </div>
 
       <div className="container mx-auto px-6 relative z-10">
