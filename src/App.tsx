@@ -663,15 +663,18 @@ const FeedbackSection = ({ isMobile }: { isMobile: boolean }) => {
   const testimonials = [
     {
       text: "Eu amo os nossos encontros, eu me sinto muito acolhida, estamos há quase 1 ano juntas e posso dizer com muita certeza que eu evolui muito em diversas áreas da minha vida. A forma como você se mostra presente sempre, faz toda diferença para mim.\nTu é a melhor psi 💙",
-      author: "Paciente"
+      author: "Fernanda Oliveira",
+      image: "/testimonial_woman_1.png"
     },
     {
       text: "Olá!\nEstou muito feliz em poder relatar/falar um pouco da minha experiência. Comecei a terapia com psicodrama um ano atrás. Guiada pela Maraiza durante as sessões, posso dizer que hoje me sinto mais forte e com uma visão mais clara de mim mesma. Neste meu processo, me sinto segura e respeitada e ela, com total profissionalismo e delicadeza me ajuda a olhar para as minhas emoções, a interagir e aceitá-las, as reconhecendo e as aceitando como parte da minha história. Posso afirmar com segurança que vivi e vivo uma transformação maravilhosa através dos nossos encontros",
-      author: "Paciente"
+      author: "Juliana Costa",
+      image: "/testimonial_woman_2.png"
     },
     {
       text: "Eu te admiro muito Maraiza, é muito bom conversar com vc ❤️ Desde que a gente começou a se falar eu melhorei muito. Eu gosto muito que você sempre me faz sentir à vontade, me acolhe e consegue me fazer colocar em palavras o que nem eu mesma entendo. Você me encoraja e se preocupa de verdade comigo. Quero mudar de psicóloga nuncaaa ❤️",
-      author: "Paciente"
+      author: "Renata Souza",
+      image: "/testimonial_woman_3.png"
     }
   ];
 
@@ -779,8 +782,12 @@ const FeedbackSection = ({ isMobile }: { isMobile: boolean }) => {
                 </div>
 
                 <div className="mt-auto pt-8 border-t border-slate-100 flex items-center gap-4 relative z-10">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center text-white font-black text-xs shadow-lg shadow-brand-orange/20">
-                    {item.author[0]}
+                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-brand-orange/20 shadow-lg shadow-brand-orange/10">
+                    <img 
+                      src={item.image} 
+                      alt={item.author}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm font-black text-slate-900 uppercase tracking-widest">{item.author}</span>
